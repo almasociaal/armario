@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Controle de equipamentos - comunicação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8E%A5%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FEF7DD; --surface:#FFFFFF; --surface-2:#FBF1D6; --line:#EADCB8;
+  --ink:#80172C; --text:#2B1D1F; --muted:#6B5B55; --brand:#FEF7DD; --brand-text:#80172C; --logo:#80172C; --shape:#80172C;
+  --ok:#2E7D4F; --ok-soft:#E2F1E7; --use:#9C7A33; --use-soft:#F6EACB;
+  --late:#D23B2F; --late-soft:#FBE3E0; --maint:#105188; --maint-soft:#E2EAF3;
+  --wpp:#1FA855; --focus:#105188;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1A0E11; --surface:#26151A; --surface-2:#311C22; --line:#4A2E35;
+    --ink:#F6E3C2; --text:#EFE3D6; --muted:#C2ADA4; --brand:#26151A; --brand-text:#FEF7DD; --logo:#FEF7DD; --shape:#BFA36D;
+    --ok:#5CC28C; --ok-soft:#173326; --use:#D9B970; --use-soft:#3A2E17;
+    --late:#FF6B5E; --late-soft:#3F1A18; --maint:#7FB2E5; --maint-soft:#1B2A3D;
+    --wpp:#2BC066; --focus:#7FB2E5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1A0E11; --surface:#26151A; --surface-2:#311C22; --line:#4A2E35;
+    --ink:#F6E3C2; --text:#EFE3D6; --muted:#C2ADA4; --brand:#26151A; --brand-text:#FEF7DD; --logo:#FEF7DD; --shape:#BFA36D;
+    --ok:#5CC28C; --ok-soft:#173326; --use:#D9B970; --use-soft:#3A2E17;
+    --late:#FF6B5E; --late-soft:#3F1A18; --maint:#7FB2E5; --maint-soft:#1B2A3D;
+    --wpp:#2BC066; --focus:#7FB2E5;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--text);font-family:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
+img{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.num,.display{font-family:"Archivo","Arial Narrow",sans-serif;font-stretch:75%}
+
+.top{background:var(--brand);color:var(--brand-text);position:sticky;top:env(safe-area-inset-top,0px);z-index:5;border-bottom:1px solid var(--line);overflow:hidden}
+.top .shape{position:absolute;right:-40px;top:0;height:100%;width:auto;color:var(--shape);opacity:.95;pointer-events:none}
+.brandrow{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.brandrow .logo{height:58px;width:auto;color:var(--logo);flex:none}
+@media (max-width:640px){.brandrow .logo{height:50px}}
+.brandrow .sep{width:1px;height:40px;background:var(--line)}
+.brandrow .area{font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--muted)}
+@media (max-width:700px){.top .shape{display:none}}
+.top-inner{position:relative;max-width:1180px;margin:0 auto;padding:16px 20px 0;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 24px}
+.title{margin:0;color:var(--ink);font-family:"Archivo","Arial Narrow",sans-serif;font-stretch:75%;font-weight:700;font-size:clamp(26px,4vw,34px);line-height:1.05;letter-spacing:.01em}
+.subtitle{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.top .grow{flex:1 1 260px;padding-bottom:12px}
+.tabs{display:flex;gap:2px;overflow-x:auto;width:100%;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:transparent;color:var(--brand-text);opacity:.75;padding:10px 14px 12px;font-weight:600;font-size:15px;cursor:pointer;border-bottom:4px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{opacity:1;border-bottom-color:var(--ink)}
+.tab:hover{opacity:1}
+
+main{max-width:1180px;margin:0 auto;padding:20px}
+section[hidden]{display:none}
+h2{font-family:"Archivo","Arial Narrow",sans-serif;font-stretch:75%;font-weight:700;font-size:26px;line-height:1.1;margin:0 0 4px;color:var(--ink)}
+h3{font-family:"Archivo","Arial Narrow",sans-serif;font-stretch:75%;font-weight:700;font-size:20px;margin:0 0 8px;color:var(--ink)}
+.lede{color:var(--muted);margin:0 0 18px;max-width:70ch}
+.note{font-size:14px;color:var(--muted)}
+.banner{border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:15px;border:1px solid var(--line);background:var(--surface)}
+.banner.warn{border-color:var(--late);background:var(--late-soft)}
+.banner.info{border-color:var(--use);background:var(--use-soft)}
+
+/* Painel */
+.board-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}
+.counters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.counter{background:var(--surface);border:1px solid var(--line);border-left:8px solid var(--c);border-radius:10px;padding:10px 14px}
+.counter .num{font-size:44px;font-weight:700;line-height:1;color:var(--c)}
+.counter .lbl{font-size:14px;color:var(--muted);font-weight:500}
+.alerts{margin-bottom:18px}
+.alerts ul{margin:6px 0 0;padding-left:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.tag{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 14px 86px;min-height:118px;overflow:hidden}
+.tag::before{content:"";position:absolute;left:0;top:0;bottom:0;width:72px;background:var(--soft)}
+.tag .no{position:absolute;left:0;top:0;width:72px;text-align:center;padding-top:12px;font-family:"Archivo","Arial Narrow",sans-serif;font-stretch:75%;font-weight:700;font-size:40px;line-height:1;color:var(--c)}
+.tag .hole{position:absolute;left:30px;bottom:14px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--c)}
+.tag .name{font-weight:600;color:var(--ink);line-height:1.25;margin:0 0 6px}
+.pill{display:inline-block;font-size:13px;font-weight:600;padding:2px 10px;border-radius:999px;background:var(--soft);color:var(--c);margin-bottom:6px}
+.tag .det{font-size:14px;color:var(--muted);line-height:1.35}
+.tag .det strong{color:var(--text);font-weight:600}
+.s-disp{--c:var(--ok);--soft:var(--ok-soft)}
+.s-uso{--c:var(--use);--soft:var(--use-soft)}
+.s-late{--c:var(--late);--soft:var(--late-soft)}
+.s-manut{--c:var(--maint);--soft:var(--maint-soft)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:6px;vertical-align:0}
+.updated{font-size:13px;color:var(--muted)}
+
+/* TV mode */
+.tv .top .tabs,.tv .board-actions .btn-reg{display:none}
+.tv main{max-width:none}
+.tv .grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.tv .tag{min-height:150px;padding-left:104px}
+.tv .tag::before,.tv .tag .no{width:88px}
+.tv .tag .no{font-size:54px}
+.tv .tag .name{font-size:20px}
+.tv .tag .det{font-size:16px}
+
+/* Botões */
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-size:15px;line-height:1.2}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.wpp{background:var(--wpp);border-color:var(--wpp);color:#fff;font-size:17px;padding:14px 22px}
+.btn.wpp:hover{filter:brightness(1.06)}
+.btn.small{padding:6px 10px;font-size:13px;border-radius:8px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.board-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Formulário */
+.form-wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;max-width:760px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:5px}
+.seg button{appearance:none;border:0;background:transparent;border-radius:8px;padding:10px 6px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,48,74,.18)}
+.field{margin-top:16px}
+.field > label,.field > .lab{display:block;font-weight:600;color:var(--ink);margin-bottom:6px}
+.field > label.choice{display:flex;font-weight:500;color:var(--text);margin-bottom:0}
+.field .hint{font-size:13px;color:var(--muted);margin:-2px 0 6px}
+.input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px}
+textarea.input{min-height:76px;resize:vertical}
+.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.choice{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--surface)}
+.choice:has(input:checked){border-color:var(--ink);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--ink)}
+.choice.off{opacity:.5;cursor:not-allowed}
+.choice input{margin-top:4px;accent-color:var(--ink);width:18px;height:18px;flex:none}
+.choice .cn{font-family:"Archivo","Arial Narrow",sans-serif;font-stretch:75%;font-weight:700;font-size:20px;color:var(--ink);line-height:1;margin-right:2px}
+.choice small{display:block;color:var(--muted);font-size:13px;line-height:1.3}
+.radios{display:flex;flex-wrap:wrap;gap:8px}
+.radios .choice{flex:1 1 160px}
+.photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.photos img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.err{color:var(--late);font-weight:600;font-size:14px;margin-top:10px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center}
+.kitlist{margin:6px 0 0;padding-left:20px;font-size:14px;color:var(--muted)}
+.success h3{color:var(--ok)}
+.msg-preview{white-space:pre-wrap;background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;padding:12px 14px;font-size:15px;margin:10px 0 16px;max-width:60ch}
+
+/* Histórico */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.filters select{width:auto}
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:860px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);background:var(--surface-2);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-weight:600;font-size:12px;background:var(--soft);color:var(--c);white-space:nowrap}
+.t-retirada{--c:var(--use);--soft:var(--use-soft)}
+.t-devolucao{--c:var(--ok);--soft:var(--ok-soft)}
+.t-ocorrencia{--c:var(--late);--soft:var(--late-soft)}
+.thumbs{display:flex;gap:4px;flex-wrap:wrap}
+.thumbs img{width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.yes{color:var(--ok);font-weight:600}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+/* Indicadores */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.kpi .num{font-size:38px;font-weight:700;color:var(--ink);line-height:1}
+.kpi .lbl{font-size:14px;color:var(--muted)}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.bars{display:grid;gap:8px}
+.bar-row{display:grid;grid-template-columns:minmax(110px,40%) 1fr 34px;gap:10px;align-items:center;font-size:14px}
+.bar-row .bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{background:var(--surface-2);border-radius:6px;height:16px;overflow:hidden}
+.bar-fill{height:100%;background:var(--ink);border-radius:6px}
+.bar-row .bv{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* Manuais */
+.man-btn{margin-top:10px}
+.tag .det + .man-btn{margin-top:10px}
+dialog.man{border:1px solid var(--line);border-radius:14px;padding:0;max-width:min(560px,calc(100vw - 24px));width:100%;background:var(--surface);color:var(--text);max-height:calc(100% - 32px);overflow:auto}
+dialog.man::backdrop{background:rgba(10,24,38,.55)}
+.man-head{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
+.man-head .no{font-family:"Archivo","Arial Narrow",sans-serif;font-stretch:75%;font-weight:700;font-size:36px;line-height:1;color:var(--ink)}
+.man-head h3{margin:2px 0 0;flex:1}
+.man-body{padding:6px 18px 18px}
+.man-body h4{margin:14px 0 6px;font-size:15px;color:var(--ink)}
+.man-body ol,.man-body ul{margin:0;padding-left:20px}
+.man-body li{margin-bottom:6px}
+.man-warn{background:var(--late-soft);border-left:4px solid var(--late);border-radius:8px;padding:8px 12px;margin-top:6px}
+.man-warn ul{padding-left:18px}
+details.man-item{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:8px}
+details.man-item summary{cursor:pointer;padding:10px 14px;font-weight:600;color:var(--ink)}
+details.man-item .man-body{padding-top:0}
+/* Ilustrações */
+.ill-wrap{margin:12px 0 4px}
+.ill{width:100%;max-width:440px;display:block;margin:0 auto;background:var(--surface-2);border-radius:12px;border:1px solid var(--line)}
+.ill .s{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.ill .t{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round}
+.ill .f{fill:var(--surface);stroke:var(--ink);stroke-width:2.2;stroke-linejoin:round}
+.ill .k{fill:var(--ink)}
+.ill .lt{fill:var(--use);opacity:.3}
+.ill .scr{fill:var(--focus);opacity:.3}
+.ill .d{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-dasharray:4 4}
+.ill .on{fill:var(--ok)}
+.ill .co circle{fill:var(--focus)}
+.ill .co text{fill:var(--surface);font:700 12px Archivo,system-ui,sans-serif;text-anchor:middle}
+.ill .lb{fill:var(--muted);font:600 11px Archivo,system-ui,sans-serif}
+.ill-cap{font-size:13px;color:var(--muted);text-align:center;margin:6px 0 0}
+.man-body ol{list-style:none;counter-reset:st;padding-left:0}
+.man-body ol li{counter-increment:st;position:relative;padding-left:32px;min-height:22px}
+.man-body ol li::before{content:counter(st);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:var(--focus);color:var(--surface);font:700 12px/22px Archivo,system-ui,sans-serif;text-align:center}
+/* Modo público (QR Code e link direto) */
+.landing{min-height:calc(100vh - 40px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;padding:24px 0;text-align:center}
+.landing .inst-logo{width:min(78vw,380px);height:auto;color:var(--logo)}
+.landing .btn.primary{font-size:19px;padding:18px 30px;border-radius:14px}
+.pub-bar{display:none;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.pub-bar .inst-logo{height:56px;width:auto;color:var(--logo)}
+.public .top{display:none}
+.public .pub-bar{display:flex}
+.public #registrar > h2,.public #registrar > .lede{display:none}
+.public main{padding-top:18px}
+.man-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+/* Regras */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.steps{margin:0;padding-left:22px}
+.steps li{margin-bottom:8px}
+.kits{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.kit{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface)}
+.kit b{font-family:"Archivo","Arial Narrow",sans-serif;font-stretch:75%;font-size:18px;color:var(--ink)}
+.kit ul{margin:4px 0 0;padding-left:18px;font-size:14px;color:var(--muted)}
+
+@media (max-width:640px){
+  main{padding:14px}
+  .counters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .counter .num{font-size:36px}
+  .seg button{font-size:14px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div id="app" class="public">
+<header class="top">
+  <svg class="shape" viewBox="0 0 1880.07 1080" aria-hidden="true"><path fill="currentColor" d="M444.53,1080H0S1115.84,134.52,1115.84,134.52C1218.35,47.67,1348.35,0,1482.7,0h75.49s160.94,0,160.94,0h160.94s0,758.13,0,758.13c0,177.77-144.11,321.87-321.87,321.87h0s-1113.67,0-1113.67,0Z"/></svg>
+  <div class="top-inner">
+    <div class="grow">
+      <div class="brandrow"><svg class="logo" viewBox="0 0 748.21 234.04" role="img" aria-label="Instituto Alma Social"><g fill="currentColor"><g> <g> <g> <g> <g> <path d="M551.08,62.6h-33.42l-64.89,80.64-64.71-80.64h-33.42c-.14.92-.22,1.89-.22,2.92v92.57h29.32v-57.88l46.36,57.88h45.54l46.34-57.7v57.7h29.32v-92.57c0-1.03-.08-2.01-.23-2.92Z"/> <path d="M251.9,135.2c-17.17,0-25.67-4.16-25.67-12.14v-60.46h-29.32v61.5c0,22.72,17.85,33.99,53.04,34h75.68v-22.9h-73.74Z"/> </g> <rect x="137.78" y="62.6" width="28.46" height="95.5" transform="translate(304.02 220.69) rotate(-180)"/> <path d="M39.31,158.09H0s98.66-83.6,98.66-83.6c9.06-7.68,20.56-11.89,32.44-11.89h20.91s-112.7,95.5-112.7,95.5Z"/> <rect x="581.97" y="62.6" width="28.46" height="95.5"/> <path d="M708.91,158.09h39.31l-98.66-83.6c-9.06-7.68-20.56-11.89-32.44-11.89h-20.91l112.7,95.5Z"/> </g> <g> <path d="M199.89,230.32c-2.82-2.48-4.23-5.93-4.23-10.34h4.97c0,3.27,1.07,5.72,3.22,7.36,2.15,1.64,5.05,2.45,8.72,2.45,3.23,0,5.78-.61,7.66-1.83,1.87-1.22,2.81-3.11,2.81-5.67,0-1.81-.47-3.25-1.42-4.32-.95-1.06-2.14-1.87-3.58-2.42-1.44-.55-3.48-1.18-6.12-1.89-.28-.04-.69-.14-1.24-.3-3.07-.79-5.57-1.65-7.48-2.57-1.91-.93-3.4-2.1-4.46-3.52-1.06-1.42-1.6-3.21-1.6-5.38,0-3.43,1.29-6.02,3.87-7.77,2.58-1.75,6.08-2.63,10.49-2.63,3.35,0,6.14.49,8.36,1.48,2.23.99,3.86,2.35,4.91,4.08,1.04,1.74,1.57,3.72,1.57,5.97h-4.91c0-2.32-.92-4.12-2.75-5.38-1.83-1.26-4.4-1.89-7.71-1.89-2.64,0-4.78.43-6.41,1.3-1.64.87-2.45,2.37-2.45,4.49,0,1.54.43,2.77,1.3,3.69.87.93,1.97,1.64,3.31,2.13,1.34.49,3.21,1.06,5.62,1.69h.06c.24.04.47.1.71.18,3.35.87,6.02,1.7,8.01,2.51,1.99.81,3.63,2,4.91,3.58,1.28,1.58,1.92,3.69,1.92,6.33,0,3.74-1.35,6.75-4.05,9.02-2.7,2.27-6.63,3.4-11.79,3.4s-9.39-1.24-12.21-3.72Z"/> <path d="M271.24,231.32c-3.17-1.81-5.62-4.32-7.33-7.54-1.71-3.21-2.57-6.91-2.57-11.08s.86-7.81,2.57-11.02c1.71-3.21,4.16-5.71,7.33-7.51,3.17-1.79,6.85-2.69,11.02-2.69s7.84.9,11,2.69c3.15,1.79,5.59,4.3,7.3,7.51,1.71,3.21,2.57,6.89,2.57,11.02s-.86,7.87-2.57,11.08c-1.71,3.21-4.15,5.72-7.3,7.54-3.15,1.81-6.82,2.72-11,2.72s-7.85-.91-11.02-2.72ZM290.72,227.81c2.4-1.36,4.27-3.32,5.59-5.88,1.32-2.56,1.98-5.6,1.98-9.1s-.66-6.5-1.98-9.1c-1.32-2.6-3.18-4.59-5.59-5.97-2.4-1.38-5.22-2.07-8.45-2.07s-6.06.69-8.48,2.07c-2.42,1.38-4.3,3.37-5.62,5.97-1.32,2.6-1.98,5.64-1.98,9.1s.66,6.54,1.98,9.1c1.32,2.56,3.19,4.52,5.62,5.88,2.42,1.36,5.25,2.04,8.48,2.04s6.05-.68,8.45-2.04Z"/> <path d="M347.2,231.32c-3.17-1.81-5.62-4.32-7.33-7.54-1.71-3.21-2.57-6.91-2.57-11.08s.86-7.81,2.57-11.02c1.71-3.21,4.16-5.71,7.33-7.51,3.17-1.79,6.85-2.69,11.02-2.69,3.55,0,6.73.65,9.55,1.95,2.82,1.3,5.14,3.13,6.98,5.5,1.83,2.36,3.1,5.14,3.81,8.34h-5.02c-.95-3.63-2.77-6.46-5.47-8.51-2.7-2.05-5.98-3.07-9.84-3.07-3.19,0-6,.7-8.42,2.1-2.42,1.4-4.31,3.39-5.65,5.97-1.34,2.58-2.01,5.61-2.01,9.07s.67,6.54,2.01,9.1c1.34,2.56,3.23,4.52,5.68,5.88,2.44,1.36,5.24,2.04,8.39,2.04,3.86,0,7.15-1.01,9.87-3.04,2.72-2.03,4.55-4.84,5.5-8.42h4.97c-.71,3.15-1.98,5.91-3.81,8.28-1.83,2.36-4.16,4.19-6.98,5.47-2.82,1.28-6,1.92-9.55,1.92-4.18,0-7.85-.91-11.02-2.72Z"/> <path d="M415.68,192.07h4.73v41.38h-4.73v-41.38ZM415.68,192.07h4.73v4.2h-4.73v-4.2ZM415.68,229.26h4.73v4.2h-4.73v-4.2Z"/> <path d="M471.63,192.84c.37-.43.79-.74,1.24-.92.45-.18.98-.27,1.57-.27s1.1.09,1.54.27c.43.18.84.48,1.21.92.37.43.7,1.03.98,1.77l14.66,38.84h-4.97l-13.42-36.83-13.54,36.83h-5.02l14.78-38.84c.28-.75.6-1.34.98-1.77ZM462.97,217.79h22.64v4.08h-22.64v-4.08Z"/> <path d="M527.26,232.71c-.49-.49-.74-1.23-.74-2.22v-38.42h4.73v38.19l-1.83-1.12h22.29v4.32h-22.23c-.99,0-1.72-.25-2.22-.74Z"/> </g> </g> <g> <path d="M227.33.41h4.12v28.83h-4.12V.41ZM227.33.41h4.12v3.58h-4.12V.41ZM227.33,25.66h4.12v3.58h-4.12v-3.58Z"/> <path d="M271.42,29.18c-.45-.26-.9-.65-1.34-1.17l-.04-.08-18.33-24.01,2.59.08v25.25h-4.12V2.64c0-.85.21-1.49.62-1.92.41-.43.95-.64,1.61-.64.41,0,.8.12,1.15.35.36.23.73.6,1.11,1.09l19.19,25.12-2.68-.29V.41h4.12v26.52c0,.82-.23,1.47-.68,1.94-.45.47-1.05.7-1.79.7-.49,0-.97-.13-1.42-.39Z"/> <path d="M294.36,27.04c-1.99-1.74-2.99-4.17-2.99-7.27h4.28c0,2.11.69,3.69,2.08,4.74,1.39,1.04,3.26,1.56,5.62,1.56,2.11,0,3.76-.38,4.94-1.15,1.18-.77,1.77-1.96,1.77-3.58,0-1.1-.29-1.98-.88-2.66-.59-.67-1.36-1.19-2.31-1.56s-2.3-.79-4.06-1.26c-.22-.05-.52-.14-.91-.25-2.17-.55-3.93-1.14-5.27-1.77-1.35-.63-2.39-1.46-3.13-2.47-.74-1.02-1.11-2.32-1.11-3.91,0-2.47.93-4.33,2.78-5.58,1.85-1.25,4.34-1.87,7.47-1.87,2.39,0,4.38.35,5.97,1.05,1.59.7,2.76,1.67,3.5,2.9.74,1.24,1.11,2.66,1.11,4.28h-4.2c0-1.48-.58-2.64-1.75-3.46-1.17-.82-2.82-1.24-4.96-1.24-1.7,0-3.07.28-4.1.84-1.03.56-1.54,1.52-1.54,2.86,0,.99.27,1.78.8,2.37.54.59,1.25,1.05,2.14,1.38.89.33,2.15.7,3.77,1.11h.04c.16.03.33.07.49.12,2.39.6,4.28,1.19,5.68,1.75,1.4.56,2.54,1.39,3.42,2.49.88,1.1,1.32,2.57,1.32,4.41,0,2.66-.97,4.79-2.9,6.38s-4.73,2.39-8.38,2.39-6.72-.87-8.71-2.61Z"/> <path d="M336.05,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M364.84.41h4.12v28.83h-4.12V.41ZM364.84.41h4.12v3.58h-4.12V.41ZM364.84,25.66h4.12v3.58h-4.12v-3.58Z"/> <path d="M393.71,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M426.02,28.03c-1.72-1.08-2.92-2.55-3.62-4.39-.7-1.84-1.05-4.01-1.05-6.51V.41h4.12v16.31c0,1.95.23,3.6.68,4.96s1.24,2.42,2.35,3.19c1.11.77,2.62,1.15,4.51,1.15s3.39-.38,4.49-1.15c1.1-.77,1.87-1.83,2.33-3.19s.68-3.01.68-4.96V.41h4.12v16.72c0,2.5-.34,4.67-1.03,6.51-.69,1.84-1.89,3.3-3.6,4.39-1.72,1.08-4.04,1.63-6.98,1.63s-5.26-.54-6.98-1.63Z"/> <path d="M468.21,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M500.81,27.76c-2.24-1.26-3.96-3.01-5.17-5.25-1.21-2.24-1.81-4.81-1.81-7.72s.6-5.44,1.81-7.68,2.93-3.98,5.17-5.23c2.24-1.25,4.82-1.87,7.76-1.87s5.51.62,7.72,1.87c2.21,1.25,3.91,2.99,5.11,5.23s1.79,4.8,1.79,7.68-.6,5.48-1.79,7.72c-1.19,2.24-2.9,3.99-5.11,5.25-2.21,1.26-4.78,1.89-7.72,1.89s-5.53-.63-7.76-1.89ZM514.09,24.63c1.57-.88,2.77-2.15,3.62-3.81.85-1.66,1.28-3.65,1.28-5.95s-.43-4.26-1.28-5.95c-.85-1.69-2.06-2.98-3.62-3.87-1.56-.89-3.4-1.34-5.52-1.34s-3.97.45-5.56,1.34c-1.59.89-2.81,2.18-3.67,3.87-.85,1.69-1.28,3.67-1.28,5.95s.43,4.29,1.28,5.95c.85,1.66,2.07,2.93,3.67,3.81,1.59.88,3.45,1.32,5.56,1.32s3.95-.44,5.52-1.32Z"/> </g> </g> </g></g></svg><span class="sep" aria-hidden="true"></span><span class="area">Comunicação</span></div>
+      <h1 class="title">Armário da Comunicação</h1>
+      <p class="subtitle">Controle de equipamentos: quem retirou, o que está fora e o que está disponível agora.</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Seções">
+      <button class="tab" role="tab" data-go="painel">Painel</button>
+      <button class="tab" role="tab" data-go="registrar">Registrar</button>
+      <button class="tab" role="tab" data-go="historico">Histórico</button>
+      <button class="tab" role="tab" data-go="indicadores">Indicadores</button>
+      <button class="tab" role="tab" data-go="regras">Como funciona</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="inicio" class="landing" hidden>
+    <svg class="inst-logo" viewBox="0 0 748.21 234.04" role="img" aria-label="Instituto Alma Social"><g fill="currentColor"><g> <g> <g> <g> <g> <path d="M551.08,62.6h-33.42l-64.89,80.64-64.71-80.64h-33.42c-.14.92-.22,1.89-.22,2.92v92.57h29.32v-57.88l46.36,57.88h45.54l46.34-57.7v57.7h29.32v-92.57c0-1.03-.08-2.01-.23-2.92Z"/> <path d="M251.9,135.2c-17.17,0-25.67-4.16-25.67-12.14v-60.46h-29.32v61.5c0,22.72,17.85,33.99,53.04,34h75.68v-22.9h-73.74Z"/> </g> <rect x="137.78" y="62.6" width="28.46" height="95.5" transform="translate(304.02 220.69) rotate(-180)"/> <path d="M39.31,158.09H0s98.66-83.6,98.66-83.6c9.06-7.68,20.56-11.89,32.44-11.89h20.91s-112.7,95.5-112.7,95.5Z"/> <rect x="581.97" y="62.6" width="28.46" height="95.5"/> <path d="M708.91,158.09h39.31l-98.66-83.6c-9.06-7.68-20.56-11.89-32.44-11.89h-20.91l112.7,95.5Z"/> </g> <g> <path d="M199.89,230.32c-2.82-2.48-4.23-5.93-4.23-10.34h4.97c0,3.27,1.07,5.72,3.22,7.36,2.15,1.64,5.05,2.45,8.72,2.45,3.23,0,5.78-.61,7.66-1.83,1.87-1.22,2.81-3.11,2.81-5.67,0-1.81-.47-3.25-1.42-4.32-.95-1.06-2.14-1.87-3.58-2.42-1.44-.55-3.48-1.18-6.12-1.89-.28-.04-.69-.14-1.24-.3-3.07-.79-5.57-1.65-7.48-2.57-1.91-.93-3.4-2.1-4.46-3.52-1.06-1.42-1.6-3.21-1.6-5.38,0-3.43,1.29-6.02,3.87-7.77,2.58-1.75,6.08-2.63,10.49-2.63,3.35,0,6.14.49,8.36,1.48,2.23.99,3.86,2.35,4.91,4.08,1.04,1.74,1.57,3.72,1.57,5.97h-4.91c0-2.32-.92-4.12-2.75-5.38-1.83-1.26-4.4-1.89-7.71-1.89-2.64,0-4.78.43-6.41,1.3-1.64.87-2.45,2.37-2.45,4.49,0,1.54.43,2.77,1.3,3.69.87.93,1.97,1.64,3.31,2.13,1.34.49,3.21,1.06,5.62,1.69h.06c.24.04.47.1.71.18,3.35.87,6.02,1.7,8.01,2.51,1.99.81,3.63,2,4.91,3.58,1.28,1.58,1.92,3.69,1.92,6.33,0,3.74-1.35,6.75-4.05,9.02-2.7,2.27-6.63,3.4-11.79,3.4s-9.39-1.24-12.21-3.72Z"/> <path d="M271.24,231.32c-3.17-1.81-5.62-4.32-7.33-7.54-1.71-3.21-2.57-6.91-2.57-11.08s.86-7.81,2.57-11.02c1.71-3.21,4.16-5.71,7.33-7.51,3.17-1.79,6.85-2.69,11.02-2.69s7.84.9,11,2.69c3.15,1.79,5.59,4.3,7.3,7.51,1.71,3.21,2.57,6.89,2.57,11.02s-.86,7.87-2.57,11.08c-1.71,3.21-4.15,5.72-7.3,7.54-3.15,1.81-6.82,2.72-11,2.72s-7.85-.91-11.02-2.72ZM290.72,227.81c2.4-1.36,4.27-3.32,5.59-5.88,1.32-2.56,1.98-5.6,1.98-9.1s-.66-6.5-1.98-9.1c-1.32-2.6-3.18-4.59-5.59-5.97-2.4-1.38-5.22-2.07-8.45-2.07s-6.06.69-8.48,2.07c-2.42,1.38-4.3,3.37-5.62,5.97-1.32,2.6-1.98,5.64-1.98,9.1s.66,6.54,1.98,9.1c1.32,2.56,3.19,4.52,5.62,5.88,2.42,1.36,5.25,2.04,8.48,2.04s6.05-.68,8.45-2.04Z"/> <path d="M347.2,231.32c-3.17-1.81-5.62-4.32-7.33-7.54-1.71-3.21-2.57-6.91-2.57-11.08s.86-7.81,2.57-11.02c1.71-3.21,4.16-5.71,7.33-7.51,3.17-1.79,6.85-2.69,11.02-2.69,3.55,0,6.73.65,9.55,1.95,2.82,1.3,5.14,3.13,6.98,5.5,1.83,2.36,3.1,5.14,3.81,8.34h-5.02c-.95-3.63-2.77-6.46-5.47-8.51-2.7-2.05-5.98-3.07-9.84-3.07-3.19,0-6,.7-8.42,2.1-2.42,1.4-4.31,3.39-5.65,5.97-1.34,2.58-2.01,5.61-2.01,9.07s.67,6.54,2.01,9.1c1.34,2.56,3.23,4.52,5.68,5.88,2.44,1.36,5.24,2.04,8.39,2.04,3.86,0,7.15-1.01,9.87-3.04,2.72-2.03,4.55-4.84,5.5-8.42h4.97c-.71,3.15-1.98,5.91-3.81,8.28-1.83,2.36-4.16,4.19-6.98,5.47-2.82,1.28-6,1.92-9.55,1.92-4.18,0-7.85-.91-11.02-2.72Z"/> <path d="M415.68,192.07h4.73v41.38h-4.73v-41.38ZM415.68,192.07h4.73v4.2h-4.73v-4.2ZM415.68,229.26h4.73v4.2h-4.73v-4.2Z"/> <path d="M471.63,192.84c.37-.43.79-.74,1.24-.92.45-.18.98-.27,1.57-.27s1.1.09,1.54.27c.43.18.84.48,1.21.92.37.43.7,1.03.98,1.77l14.66,38.84h-4.97l-13.42-36.83-13.54,36.83h-5.02l14.78-38.84c.28-.75.6-1.34.98-1.77ZM462.97,217.79h22.64v4.08h-22.64v-4.08Z"/> <path d="M527.26,232.71c-.49-.49-.74-1.23-.74-2.22v-38.42h4.73v38.19l-1.83-1.12h22.29v4.32h-22.23c-.99,0-1.72-.25-2.22-.74Z"/> </g> </g> <g> <path d="M227.33.41h4.12v28.83h-4.12V.41ZM227.33.41h4.12v3.58h-4.12V.41ZM227.33,25.66h4.12v3.58h-4.12v-3.58Z"/> <path d="M271.42,29.18c-.45-.26-.9-.65-1.34-1.17l-.04-.08-18.33-24.01,2.59.08v25.25h-4.12V2.64c0-.85.21-1.49.62-1.92.41-.43.95-.64,1.61-.64.41,0,.8.12,1.15.35.36.23.73.6,1.11,1.09l19.19,25.12-2.68-.29V.41h4.12v26.52c0,.82-.23,1.47-.68,1.94-.45.47-1.05.7-1.79.7-.49,0-.97-.13-1.42-.39Z"/> <path d="M294.36,27.04c-1.99-1.74-2.99-4.17-2.99-7.27h4.28c0,2.11.69,3.69,2.08,4.74,1.39,1.04,3.26,1.56,5.62,1.56,2.11,0,3.76-.38,4.94-1.15,1.18-.77,1.77-1.96,1.77-3.58,0-1.1-.29-1.98-.88-2.66-.59-.67-1.36-1.19-2.31-1.56s-2.3-.79-4.06-1.26c-.22-.05-.52-.14-.91-.25-2.17-.55-3.93-1.14-5.27-1.77-1.35-.63-2.39-1.46-3.13-2.47-.74-1.02-1.11-2.32-1.11-3.91,0-2.47.93-4.33,2.78-5.58,1.85-1.25,4.34-1.87,7.47-1.87,2.39,0,4.38.35,5.97,1.05,1.59.7,2.76,1.67,3.5,2.9.74,1.24,1.11,2.66,1.11,4.28h-4.2c0-1.48-.58-2.64-1.75-3.46-1.17-.82-2.82-1.24-4.96-1.24-1.7,0-3.07.28-4.1.84-1.03.56-1.54,1.52-1.54,2.86,0,.99.27,1.78.8,2.37.54.59,1.25,1.05,2.14,1.38.89.33,2.15.7,3.77,1.11h.04c.16.03.33.07.49.12,2.39.6,4.28,1.19,5.68,1.75,1.4.56,2.54,1.39,3.42,2.49.88,1.1,1.32,2.57,1.32,4.41,0,2.66-.97,4.79-2.9,6.38s-4.73,2.39-8.38,2.39-6.72-.87-8.71-2.61Z"/> <path d="M336.05,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M364.84.41h4.12v28.83h-4.12V.41ZM364.84.41h4.12v3.58h-4.12V.41ZM364.84,25.66h4.12v3.58h-4.12v-3.58Z"/> <path d="M393.71,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M426.02,28.03c-1.72-1.08-2.92-2.55-3.62-4.39-.7-1.84-1.05-4.01-1.05-6.51V.41h4.12v16.31c0,1.95.23,3.6.68,4.96s1.24,2.42,2.35,3.19c1.11.77,2.62,1.15,4.51,1.15s3.39-.38,4.49-1.15c1.1-.77,1.87-1.83,2.33-3.19s.68-3.01.68-4.96V.41h4.12v16.72c0,2.5-.34,4.67-1.03,6.51-.69,1.84-1.89,3.3-3.6,4.39-1.72,1.08-4.04,1.63-6.98,1.63s-5.26-.54-6.98-1.63Z"/> <path d="M468.21,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M500.81,27.76c-2.24-1.26-3.96-3.01-5.17-5.25-1.21-2.24-1.81-4.81-1.81-7.72s.6-5.44,1.81-7.68,2.93-3.98,5.17-5.23c2.24-1.25,4.82-1.87,7.76-1.87s5.51.62,7.72,1.87c2.21,1.25,3.91,2.99,5.11,5.23s1.79,4.8,1.79,7.68-.6,5.48-1.79,7.72c-1.19,2.24-2.9,3.99-5.11,5.25-2.21,1.26-4.78,1.89-7.72,1.89s-5.53-.63-7.76-1.89ZM514.09,24.63c1.57-.88,2.77-2.15,3.62-3.81.85-1.66,1.28-3.65,1.28-5.95s-.43-4.26-1.28-5.95c-.85-1.69-2.06-2.98-3.62-3.87-1.56-.89-3.4-1.34-5.52-1.34s-3.97.45-5.56,1.34c-1.59.89-2.81,2.18-3.67,3.87-.85,1.69-1.28,3.67-1.28,5.95s.43,4.29,1.28,5.95c.85,1.66,2.07,2.93,3.67,3.81,1.59.88,3.45,1.32,5.56,1.32s3.95-.44,5.52-1.32Z"/> </g> </g> </g></g></svg>
+    <button class="btn primary" type="button" data-go="registrar">Registrar retirada ou devolução</button>
+  </section>
+  <div id="conn" class="banner info" hidden></div>
+
+  <!-- PAINEL -->
+  <section id="painel">
+    <div class="board-head">
+      <div>
+        <h2>Status do armário</h2>
+        <div class="legend">
+          <span class="s-disp">Disponível</span><span class="s-uso">Em uso</span><span class="s-late">Atrasado</span><span class="s-manut">Manutenção ou fora de uso</span>
+        </div>
+      </div>
+      <div class="board-actions">
+        <button class="btn primary btn-reg" data-go="registrar">Registrar retirada ou devolução</button>
+      </div>
+    </div>
+    <div class="counters">
+      <div class="counter s-disp"><div class="num" id="cDisp">–</div><div class="lbl">disponíveis</div></div>
+      <div class="counter s-uso"><div class="num" id="cUso">–</div><div class="lbl">em uso</div></div>
+      <div class="counter s-late"><div class="num" id="cLate">–</div><div class="lbl">atrasados</div></div>
+      <div class="counter s-manut"><div class="num" id="cManut">–</div><div class="lbl">em manutenção</div></div>
+    </div>
+    <div id="alerts" class="banner warn alerts" hidden></div>
+    <div class="grid" id="grid"></div>
+    <p class="updated" id="updated"></p>
+  </section>
+
+  <!-- REGISTRAR -->
+  <section id="registrar" hidden>
+    <div class="pub-bar"><svg class="inst-logo" viewBox="0 0 748.21 234.04" role="img" aria-label="Instituto Alma Social"><g fill="currentColor"><g> <g> <g> <g> <g> <path d="M551.08,62.6h-33.42l-64.89,80.64-64.71-80.64h-33.42c-.14.92-.22,1.89-.22,2.92v92.57h29.32v-57.88l46.36,57.88h45.54l46.34-57.7v57.7h29.32v-92.57c0-1.03-.08-2.01-.23-2.92Z"/> <path d="M251.9,135.2c-17.17,0-25.67-4.16-25.67-12.14v-60.46h-29.32v61.5c0,22.72,17.85,33.99,53.04,34h75.68v-22.9h-73.74Z"/> </g> <rect x="137.78" y="62.6" width="28.46" height="95.5" transform="translate(304.02 220.69) rotate(-180)"/> <path d="M39.31,158.09H0s98.66-83.6,98.66-83.6c9.06-7.68,20.56-11.89,32.44-11.89h20.91s-112.7,95.5-112.7,95.5Z"/> <rect x="581.97" y="62.6" width="28.46" height="95.5"/> <path d="M708.91,158.09h39.31l-98.66-83.6c-9.06-7.68-20.56-11.89-32.44-11.89h-20.91l112.7,95.5Z"/> </g> <g> <path d="M199.89,230.32c-2.82-2.48-4.23-5.93-4.23-10.34h4.97c0,3.27,1.07,5.72,3.22,7.36,2.15,1.64,5.05,2.45,8.72,2.45,3.23,0,5.78-.61,7.66-1.83,1.87-1.22,2.81-3.11,2.81-5.67,0-1.81-.47-3.25-1.42-4.32-.95-1.06-2.14-1.87-3.58-2.42-1.44-.55-3.48-1.18-6.12-1.89-.28-.04-.69-.14-1.24-.3-3.07-.79-5.57-1.65-7.48-2.57-1.91-.93-3.4-2.1-4.46-3.52-1.06-1.42-1.6-3.21-1.6-5.38,0-3.43,1.29-6.02,3.87-7.77,2.58-1.75,6.08-2.63,10.49-2.63,3.35,0,6.14.49,8.36,1.48,2.23.99,3.86,2.35,4.91,4.08,1.04,1.74,1.57,3.72,1.57,5.97h-4.91c0-2.32-.92-4.12-2.75-5.38-1.83-1.26-4.4-1.89-7.71-1.89-2.64,0-4.78.43-6.41,1.3-1.64.87-2.45,2.37-2.45,4.49,0,1.54.43,2.77,1.3,3.69.87.93,1.97,1.64,3.31,2.13,1.34.49,3.21,1.06,5.62,1.69h.06c.24.04.47.1.71.18,3.35.87,6.02,1.7,8.01,2.51,1.99.81,3.63,2,4.91,3.58,1.28,1.58,1.92,3.69,1.92,6.33,0,3.74-1.35,6.75-4.05,9.02-2.7,2.27-6.63,3.4-11.79,3.4s-9.39-1.24-12.21-3.72Z"/> <path d="M271.24,231.32c-3.17-1.81-5.62-4.32-7.33-7.54-1.71-3.21-2.57-6.91-2.57-11.08s.86-7.81,2.57-11.02c1.71-3.21,4.16-5.71,7.33-7.51,3.17-1.79,6.85-2.69,11.02-2.69s7.84.9,11,2.69c3.15,1.79,5.59,4.3,7.3,7.51,1.71,3.21,2.57,6.89,2.57,11.02s-.86,7.87-2.57,11.08c-1.71,3.21-4.15,5.72-7.3,7.54-3.15,1.81-6.82,2.72-11,2.72s-7.85-.91-11.02-2.72ZM290.72,227.81c2.4-1.36,4.27-3.32,5.59-5.88,1.32-2.56,1.98-5.6,1.98-9.1s-.66-6.5-1.98-9.1c-1.32-2.6-3.18-4.59-5.59-5.97-2.4-1.38-5.22-2.07-8.45-2.07s-6.06.69-8.48,2.07c-2.42,1.38-4.3,3.37-5.62,5.97-1.32,2.6-1.98,5.64-1.98,9.1s.66,6.54,1.98,9.1c1.32,2.56,3.19,4.52,5.62,5.88,2.42,1.36,5.25,2.04,8.48,2.04s6.05-.68,8.45-2.04Z"/> <path d="M347.2,231.32c-3.17-1.81-5.62-4.32-7.33-7.54-1.71-3.21-2.57-6.91-2.57-11.08s.86-7.81,2.57-11.02c1.71-3.21,4.16-5.71,7.33-7.51,3.17-1.79,6.85-2.69,11.02-2.69,3.55,0,6.73.65,9.55,1.95,2.82,1.3,5.14,3.13,6.98,5.5,1.83,2.36,3.1,5.14,3.81,8.34h-5.02c-.95-3.63-2.77-6.46-5.47-8.51-2.7-2.05-5.98-3.07-9.84-3.07-3.19,0-6,.7-8.42,2.1-2.42,1.4-4.31,3.39-5.65,5.97-1.34,2.58-2.01,5.61-2.01,9.07s.67,6.54,2.01,9.1c1.34,2.56,3.23,4.52,5.68,5.88,2.44,1.36,5.24,2.04,8.39,2.04,3.86,0,7.15-1.01,9.87-3.04,2.72-2.03,4.55-4.84,5.5-8.42h4.97c-.71,3.15-1.98,5.91-3.81,8.28-1.83,2.36-4.16,4.19-6.98,5.47-2.82,1.28-6,1.92-9.55,1.92-4.18,0-7.85-.91-11.02-2.72Z"/> <path d="M415.68,192.07h4.73v41.38h-4.73v-41.38ZM415.68,192.07h4.73v4.2h-4.73v-4.2ZM415.68,229.26h4.73v4.2h-4.73v-4.2Z"/> <path d="M471.63,192.84c.37-.43.79-.74,1.24-.92.45-.18.98-.27,1.57-.27s1.1.09,1.54.27c.43.18.84.48,1.21.92.37.43.7,1.03.98,1.77l14.66,38.84h-4.97l-13.42-36.83-13.54,36.83h-5.02l14.78-38.84c.28-.75.6-1.34.98-1.77ZM462.97,217.79h22.64v4.08h-22.64v-4.08Z"/> <path d="M527.26,232.71c-.49-.49-.74-1.23-.74-2.22v-38.42h4.73v38.19l-1.83-1.12h22.29v4.32h-22.23c-.99,0-1.72-.25-2.22-.74Z"/> </g> </g> <g> <path d="M227.33.41h4.12v28.83h-4.12V.41ZM227.33.41h4.12v3.58h-4.12V.41ZM227.33,25.66h4.12v3.58h-4.12v-3.58Z"/> <path d="M271.42,29.18c-.45-.26-.9-.65-1.34-1.17l-.04-.08-18.33-24.01,2.59.08v25.25h-4.12V2.64c0-.85.21-1.49.62-1.92.41-.43.95-.64,1.61-.64.41,0,.8.12,1.15.35.36.23.73.6,1.11,1.09l19.19,25.12-2.68-.29V.41h4.12v26.52c0,.82-.23,1.47-.68,1.94-.45.47-1.05.7-1.79.7-.49,0-.97-.13-1.42-.39Z"/> <path d="M294.36,27.04c-1.99-1.74-2.99-4.17-2.99-7.27h4.28c0,2.11.69,3.69,2.08,4.74,1.39,1.04,3.26,1.56,5.62,1.56,2.11,0,3.76-.38,4.94-1.15,1.18-.77,1.77-1.96,1.77-3.58,0-1.1-.29-1.98-.88-2.66-.59-.67-1.36-1.19-2.31-1.56s-2.3-.79-4.06-1.26c-.22-.05-.52-.14-.91-.25-2.17-.55-3.93-1.14-5.27-1.77-1.35-.63-2.39-1.46-3.13-2.47-.74-1.02-1.11-2.32-1.11-3.91,0-2.47.93-4.33,2.78-5.58,1.85-1.25,4.34-1.87,7.47-1.87,2.39,0,4.38.35,5.97,1.05,1.59.7,2.76,1.67,3.5,2.9.74,1.24,1.11,2.66,1.11,4.28h-4.2c0-1.48-.58-2.64-1.75-3.46-1.17-.82-2.82-1.24-4.96-1.24-1.7,0-3.07.28-4.1.84-1.03.56-1.54,1.52-1.54,2.86,0,.99.27,1.78.8,2.37.54.59,1.25,1.05,2.14,1.38.89.33,2.15.7,3.77,1.11h.04c.16.03.33.07.49.12,2.39.6,4.28,1.19,5.68,1.75,1.4.56,2.54,1.39,3.42,2.49.88,1.1,1.32,2.57,1.32,4.41,0,2.66-.97,4.79-2.9,6.38s-4.73,2.39-8.38,2.39-6.72-.87-8.71-2.61Z"/> <path d="M336.05,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M364.84.41h4.12v28.83h-4.12V.41ZM364.84.41h4.12v3.58h-4.12V.41ZM364.84,25.66h4.12v3.58h-4.12v-3.58Z"/> <path d="M393.71,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M426.02,28.03c-1.72-1.08-2.92-2.55-3.62-4.39-.7-1.84-1.05-4.01-1.05-6.51V.41h4.12v16.31c0,1.95.23,3.6.68,4.96s1.24,2.42,2.35,3.19c1.11.77,2.62,1.15,4.51,1.15s3.39-.38,4.49-1.15c1.1-.77,1.87-1.83,2.33-3.19s.68-3.01.68-4.96V.41h4.12v16.72c0,2.5-.34,4.67-1.03,6.51-.69,1.84-1.89,3.3-3.6,4.39-1.72,1.08-4.04,1.63-6.98,1.63s-5.26-.54-6.98-1.63Z"/> <path d="M468.21,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M500.81,27.76c-2.24-1.26-3.96-3.01-5.17-5.25-1.21-2.24-1.81-4.81-1.81-7.72s.6-5.44,1.81-7.68,2.93-3.98,5.17-5.23c2.24-1.25,4.82-1.87,7.76-1.87s5.51.62,7.72,1.87c2.21,1.25,3.91,2.99,5.11,5.23s1.79,4.8,1.79,7.68-.6,5.48-1.79,7.72c-1.19,2.24-2.9,3.99-5.11,5.25-2.21,1.26-4.78,1.89-7.72,1.89s-5.53-.63-7.76-1.89ZM514.09,24.63c1.57-.88,2.77-2.15,3.62-3.81.85-1.66,1.28-3.65,1.28-5.95s-.43-4.26-1.28-5.95c-.85-1.69-2.06-2.98-3.62-3.87-1.56-.89-3.4-1.34-5.52-1.34s-3.97.45-5.56,1.34c-1.59.89-2.81,2.18-3.67,3.87-.85,1.69-1.28,3.67-1.28,5.95s.43,4.29,1.28,5.95c.85,1.66,2.07,2.93,3.67,3.81,1.59.88,3.45,1.32,5.56,1.32s3.95-.44,5.52-1.32Z"/> </g> </g> </g></g></svg><button class="btn small" type="button" data-go="inicio">Voltar</button></div>
+    <h2>Registrar movimentação</h2>
+    <p class="lede">Preencha na hora da retirada e de novo na devolução. No final, envie o resumo no grupo do WhatsApp.</p>
+    <div class="form-wrap">
+      <div class="card" id="formCard">
+        <div class="seg" role="group" aria-label="Tipo de registro">
+          <button type="button" data-tipo="retirada" aria-pressed="true">Retirada</button>
+          <button type="button" data-tipo="devolucao" aria-pressed="false">Devolução</button>
+          <button type="button" data-tipo="ocorrencia" aria-pressed="false">Ocorrência</button>
+        </div>
+        <form id="form" novalidate>
+          <div class="field">
+            <label for="fNome">Seu nome</label>
+            <input class="input" id="fNome" autocomplete="name" placeholder="Nome e sobrenome">
+          </div>
+
+          <div class="field">
+            <span class="lab" id="lblItens">Equipamentos que você está retirando</span>
+            <p class="hint" id="hintItens">Só aparecem marcáveis os que estão disponíveis agora.</p>
+            <div class="choices" id="fItens" role="group" aria-labelledby="lblItens"></div>
+          </div>
+
+          <div class="field" data-show="retirada devolucao">
+            <span class="lab" id="lblChave">Chave entregue por</span>
+            <div class="radios" id="fChave" role="radiogroup" aria-labelledby="lblChave"></div>
+          </div>
+
+          <div class="field" data-show="retirada">
+            <label for="fUso">Para que vai usar</label>
+            <p class="hint">Escreva assim: tipo de captação – área</p>
+            <input class="input" id="fUso" placeholder="Ex.: Vídeo depoimento – Educação">
+          </div>
+
+          <div class="field" data-show="retirada">
+            <label for="fPrev">Devolução prevista</label>
+            <input class="input" id="fPrev" type="datetime-local">
+          </div>
+
+          <div class="field" data-show="devolucao">
+            <span class="lab" id="lblEstado">Como os equipamentos voltaram</span>
+            <div class="radios" role="radiogroup" aria-labelledby="lblEstado">
+              <label class="choice"><input type="radio" name="estado" value="ok" checked><span>Tudo certo</span></label>
+              <label class="choice"><input type="radio" name="estado" value="avaria"><span>Com avaria</span></label>
+              <label class="choice"><input type="radio" name="estado" value="faltando"><span>Faltando peça</span></label>
+            </div>
+          </div>
+
+          <div class="field" data-show="ocorrencia">
+            <span class="lab" id="lblOc">O que aconteceu</span>
+            <div class="radios" role="radiogroup" aria-labelledby="lblOc">
+              <label class="choice"><input type="radio" name="oc" value="avaria" checked><span>Avaria ou defeito</span></label>
+              <label class="choice"><input type="radio" name="oc" value="perda"><span>Perda ou furto</span></label>
+              <label class="choice"><input type="radio" name="oc" value="manutencao"><span>Enviado para manutenção</span></label>
+              <label class="choice"><input type="radio" name="oc" value="liberado"><span>Voltou da manutenção</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="fObs" id="lblObs">Observações</label>
+            <textarea class="input" id="fObs" placeholder="Algo que a equipe precisa saber?"></textarea>
+          </div>
+
+          <div class="field" data-show="retirada devolucao">
+            <label class="choice"><input type="checkbox" id="fKit"><span>Conferi o kit completo (acessórios, cabos, carregadores e case)<small id="kitHint"></small></span></label>
+          </div>
+
+          <div class="field">
+            <span class="lab">Fotos de como estão os equipamentos</span>
+            <p class="hint" id="photoHint">Tire fotos com o kit aberto e todos os acessórios aparecendo.</p>
+            <span class="btn file-btn" id="photoBtn">Tirar ou escolher fotos<input type="file" id="fFotos" accept="image/*" multiple></span>
+            <div class="photos" id="photoPrev"></div>
+          </div>
+
+          <div class="err" id="formErr" role="alert" hidden></div>
+          <div class="actions">
+            <button type="submit" class="btn primary" id="saveBtn">Salvar registro</button>
+            <span class="note" id="saveStatus"></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="card success" id="successCard" hidden>
+        <h3>Registro salvo</h3>
+        <p class="note" id="shareNote">Agora envie o resumo no grupo.</p>
+        <div class="msg-preview" id="msgPreview"></div>
+        <div class="actions">
+          <a class="btn wpp" id="wppBtn" href="#" target="_blank" rel="noopener noreferrer">Enviar no WhatsApp</a>
+          <button class="btn" id="copyBtn" type="button">Copiar mensagem</button>
+          <button class="btn" id="againBtn" type="button">Fazer outro registro</button>
+        </div>
+        <div id="manLinksBox" hidden>
+          <h3 style="margin-top:18px">Manual dos equipamentos que você retirou</h3>
+          <div class="man-links" id="manLinks"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section id="historico" hidden>
+    <h2>Histórico de movimentações</h2>
+    <p class="lede">Tudo o que foi registrado, do mais recente para o mais antigo. Toque numa foto para ampliar.</p>
+    <div class="filters">
+      <select class="input" id="hTipo" aria-label="Filtrar por tipo">
+        <option value="">Todos os tipos</option>
+        <option value="retirada">Retiradas</option>
+        <option value="devolucao">Devoluções</option>
+        <option value="ocorrencia">Ocorrências</option>
+      </select>
+      <select class="input" id="hItem" aria-label="Filtrar por equipamento"></select>
+      <a class="btn" id="csvBtn" href="#" target="_blank" rel="noopener" hidden>Abrir planilha</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Quando</th><th>Tipo</th><th>Nome</th><th>Equipamentos</th><th>Chave</th><th>Situação</th><th>Fotos</th><th>Grupo</th></tr></thead>
+        <tbody id="hBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- INDICADORES -->
+  <section id="indicadores" hidden>
+    <div class="board-head">
+      <div>
+        <h2>Indicadores de uso</h2>
+        <p class="lede" style="margin:0">Mostram se o processo está sendo seguido e quais equipamentos são mais usados.</p>
+      </div>
+      <select class="input" id="period" aria-label="Período" style="width:auto">
+        <option value="7">Últimos 7 dias</option>
+        <option value="30" selected>Últimos 30 dias</option>
+        <option value="month">Este mês</option>
+        <option value="all">Desde o início</option>
+      </select>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="num" id="kRet">–</div><div class="lbl">retiradas</div></div>
+      <div class="kpi"><div class="num" id="kWpp">–</div><div class="lbl">registros avisados no grupo</div></div>
+      <div class="kpi"><div class="num" id="kFoto">–</div><div class="lbl">retiradas e devoluções com foto</div></div>
+      <div class="kpi"><div class="num" id="kPrazo">–</div><div class="lbl">devoluções no prazo</div></div>
+      <div class="kpi"><div class="num" id="kTempo">–</div><div class="lbl">tempo médio de uso</div></div>
+      <div class="kpi"><div class="num" id="kOc">–</div><div class="lbl">ocorrências</div></div>
+    </div>
+    <div class="charts">
+      <div class="card"><h3>Retiradas por equipamento</h3><div class="bars" id="barsEq"></div></div>
+      <div class="card"><h3>Retiradas por pessoa</h3><div class="bars" id="barsPes"></div></div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="regras" hidden>
+    <h2>Como funciona</h2>
+    <p class="lede">O passo a passo para retirar e devolver, as regras do armário e o que conferir em cada kit.</p>
+    <div class="rules">
+      <div class="card">
+        <h3>Passo a passo</h3>
+        <ol class="steps" id="stepsList"></ol>
+      </div>
+      <div class="card">
+        <h3>Regras do armário</h3>
+        <ul class="steps">
+          <li>Devolva no horário previsto. Se precisar de mais tempo, avise no grupo.</li>
+          <li>Equipamento devolvido com avaria ou faltando peça fica em manutenção até alguém registrar “Voltou da manutenção”.</li>
+          <li>Toda retirada e devolução tem foto e aviso no grupo, sem exceção.</li>
+          <li>A chave só sai com o registro feito.</li>
+        </ul>
+        <h3 style="margin-top:16px">Responsáveis pela chave</h3>
+        <ul class="steps" id="keyList"></ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px" id="manuais">
+      <h3>Manuais de uso</h3>
+      <p class="note" style="margin-top:0">Guia rápido de cada equipamento, para quem pegar emprestado. O mesmo manual abre no botão “Como usar” de cada cartão do painel.</p>
+      <div id="manList"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h3>O que conferir em cada kit</h3>
+      <div class="kits" id="kits"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h3>Equipamentos baixados</h3>
+      <p class="note" style="margin-top:0">Saíram do controle do armário, mas os registros deles continuam no histórico e nos indicadores.</p>
+      <div class="kits" id="baixados"></div>
+    </div>
+  </section>
+</main>
+<dialog class="man" id="manDlg" aria-labelledby="manTitle">
+  <div class="man-head"><span class="no" id="manNo"></span><h3 id="manTitle"></h3><button class="btn small" id="manPdf" type="button">Baixar PDF</button><button class="btn small" id="manClose" type="button">Fechar</button></div>
+  <div class="man-body" id="manBody"></div>
+</dialog>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- Servidor (Google Apps Script) ---------- */
+// Endereço do Apps Script (a mesma implantação /exec do QR Code antigo).
+const API='https://script.google.com/macros/s/AKfycbx_h0G2HLvkDgVOb6qkzrOM2HHCGOGTtIsYI_OJpcWk2JfPeQSHpqxQa0dOXQPKn2RanQ/exec';
+async function server(fn, ...args){
+  const body = fn==='saveRecord' ? {acao:fn, dados:args[0]} : fn==='markWpp' ? {acao:fn, id:args[0]} : {acao:fn};
+  const r = await fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body), redirect:'follow'});
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.erro||'Erro no servidor');
+  return j.data;
+}
+function blobToB64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
+
+/* ---------- Dados fixos ---------- */
+const EQUIP = [
+  {n:1,  nome:'Tripé grande 01', kit:['Tripé','Adaptador de celular']},
+  {n:2,  nome:'Tripé grande 02', kit:['Tripé','Adaptador de celular']},
+  {n:3,  nome:'Tripé grande Ulanzi rosa', kit:['Tripé','Adaptador de celular']},
+  {n:4,  nome:'Tripé médio p/ câmera e luz', kit:['Tripé com manivela','Sapata de encaixe','Adaptador de celular']},
+  {n:5,  nome:'LED pequeno (móvel)', kit:['LED','Cabo de carga','Bateria carregada']},
+  {n:6,  nome:'LED grande (fixo)', kit:['LED','Fonte ou bateria','Cabo']},
+  {n:7,  nome:'Ring light + suporte p/ celular', kit:['Aro de luz','Suporte de celular','Cabo USB']},
+  {n:8,  nome:'Microfone lapela HP', kit:['Transmissor(es)','Receptor','Case de carga','Cabos e adaptadores']},
+  {n:9,  nome:'Celular Samsung S25', baixa:'Sumiu. A ocorrência foi registrada e o aparelho foi substituído.', kit:['Aparelho','Carregador e cabo','Capa','Bateria acima de 50%','Contas pessoais deslogadas']},
+  {n:10, nome:'Teleprompter TP2A', kit:['Espelho','Suporte','Controle','Peças de fixação']},
+  {n:11, nome:'Microfone lapela DJI Mic 3', kit:['Transmissores','Receptor','Case de carga','Cabos e adaptadores']},
+  {n:12, nome:'Celular Motorola Signature', kit:['Aparelho','Carregador e cabo','Capa','Bateria acima de 50%','Contas pessoais deslogadas']},
+  {n:100, tag:'10', nome:'Teleprompter TP2A (antigo)', baixa:'Vidro quebrado. Substituído por um novo do mesmo modelo, que ficou com a etiqueta 10. As peças do antigo ficaram guardadas como reposição.', kit:['Espelho','Suporte','Controle','Peças de fixação']}
+];
+const ATIVOS = EQUIP.filter(e=>!e.baixa);
+const MANUAIS = {
+  tripe: {
+    passos:['Solte as travas das pernas, abra o tripé e apoie em chão firme e plano.',
+      'Suba a coluna começando pela parte mais grossa (de baixo) e aperte cada trava.',
+      'Rosqueie o LED, o ring light ou o adaptador de celular no topo até firmar.',
+      'Confira se está estável antes de soltar a mão.'],
+    cuidados:['Com luz em cima, abra as pernas por completo e evite lugares com vento ou passagem de pessoas.',
+      'Não force travas: se não deslizar, a trava ainda está fechada.'],
+    devolver:'Retire o que estiver no topo, baixe a coluna, feche as pernas e guarde o adaptador junto.'
+  },
+  tripeMedio: {
+    passos:['Abra as pernas pelas travas e ajuste a altura de cada uma até o tripé ficar nivelado.',
+      'Prenda a sapata na câmera (ou o adaptador no celular) e encaixe a sapata na cabeça do tripé até travar.',
+      'Use a manopla para mover a cabeça e enquadrar. Aperte as travas para fixar a posição.'],
+    cuidados:['Segure sempre a câmera antes de soltar qualquer trava da cabeça.',
+      'Não carregue o tripé com a câmera montada.'],
+    devolver:'Tire a câmera primeiro, depois feche o tripé. A sapata volta junto com ele.'
+  },
+  ledPequeno: {
+    passos:['Antes de sair, confira a bateria. Se estiver baixa, carregue pelo cabo USB.',
+      'Ligue no botão e ajuste o brilho e a cor da luz (mais quente ou mais fria).',
+      'Encaixe no suporte do celular ou segure na mão.',
+      'Aponte para o rosto de lado, em ângulo de uns 45°, e não de frente.'],
+    cuidados:['Não cubra nem guarde a luz enquanto estiver quente.'],
+    devolver:'Desligue, deixe esfriar e guarde com o cabo de carga.'
+  },
+  ledGrande: {
+    passos:['Rosqueie a luz no tripé grande antes de ligar e confira se está firme.',
+      'Conecte a fonte (ou a bateria) e ligue.',
+      'Ajuste o brilho e a cor. Posicione a 1 ou 2 metros da pessoa, em ângulo de uns 45°.'],
+    cuidados:['A luz é pesada: use o tripé com as pernas totalmente abertas e não arraste o tripé com a luz no alto.',
+      'Não encoste na parte da frente quando estiver ligada há muito tempo.'],
+    devolver:'Desligue, desconecte, espere esfriar e guarde com a fonte e o cabo.'
+  },
+  ring: {
+    passos:['Rosqueie o aro no tripé e encaixe o suporte de celular no centro.',
+      'Ligue o cabo USB numa tomada com adaptador ou num carregador portátil.',
+      'Acenda pelo controle do cabo e ajuste o brilho e a cor.',
+      'Prenda o celular no centro do aro, com a câmera virada para a pessoa.'],
+    cuidados:['Aperte bem o suporte antes de soltar o celular.'],
+    devolver:'Desligue, solte o celular, enrole o cabo sem dobrar e guarde o suporte junto.'
+  },
+  micHP: {
+    passos:['Confira a carga do transmissor e do receptor. Se precisar, carregue no case ou pelo cabo.',
+      'Ligue os dois e espere a luz parar de piscar: isso indica que estão conectados.',
+      'Encaixe o receptor na entrada do celular (USB-C) ou da câmera.',
+      'Prenda o transmissor na roupa, a cerca de um palmo da boca.',
+      'Grave um teste de 10 segundos e ouça antes de começar.'],
+    cuidados:['Evite encostar o microfone em colar, cabelo ou tecido que fique roçando.'],
+    devolver:'Desligue os dois e devolva tudo ao case, com cabos e adaptadores.'
+  },
+  djiMic3: {
+    passos:['Tire os transmissores e o receptor do case de carga.',
+      'Ligue cada um segurando o botão de energia por 2 segundos. Eles já vêm conectados: luz verde fixa no transmissor significa que está pronto.',
+      'Encaixe o adaptador USB-C no receptor e conecte ao celular. Na câmera, ligue o receptor na entrada de microfone.',
+      'Prenda o transmissor na roupa com o clipe ou o ímã, perto do peito e a uns 20 cm da boca.',
+      'Grave um teste de 10 segundos e ouça antes de começar.'],
+    cuidados:['Luz verde piscando quer dizer que o transmissor não está conectado: segure o botão de pareamento por 2 segundos no transmissor e no receptor.',
+      'Os adaptadores são pequenos e fáceis de perder: confira antes de sair do local.'],
+    devolver:'Desligue e coloque tudo de volta no case, que também carrega as peças.'
+  },
+  teleprompter: {
+    passos:['No celular ou tablet que vai mostrar o texto, instale o app FEELWORLD (App Store ou Google Play) e cole o roteiro.',
+      'Prenda esse celular ou tablet no suporte, com a tela virada para cima, embaixo do vidro.',
+      'Posicione o celular ou a câmera que vai gravar atrás do vidro, com a lente centralizada. Use o anel adaptador que encaixar na lente.',
+      'Ligue o Bluetooth do celular, abra o app e só depois ligue o controle remoto: ele conecta sozinho.',
+      'Pelo controle, comece, pause e ajuste a velocidade do texto. Se o texto aparecer invertido, ative o modo espelhado no app.'],
+    cuidados:['O vidro é frágil. Limpe só com o pano de microfibra e nunca apoie o vidro na mesa.',
+      'Transporte sempre na bolsa do kit, sem nada pesado por cima.'],
+    devolver:'Desmonte, guarde o vidro protegido na bolsa e confira controle, suportes e anéis adaptadores.'
+  },
+  celular: {
+    passos:['Peça a senha de desbloqueio para uma das responsáveis pela chave.',
+      'Limpe a lente e grave com a câmera traseira, que tem mais qualidade.',
+      'Grave na horizontal para site e YouTube, e na vertical para Reels e Stories.',
+      'Use só para a captação combinada. As redes da instituição só podem ser acessadas com autorização da comunicação.'],
+    cuidados:['Não entre em contas pessoais, não instale apps e não apague arquivos.',
+      'Use sempre com a capa.'],
+    devolver:'Deixe as gravações na galeria, avise a comunicação e devolva com carregador e cabo.'
+  }
+};
+
+const co=(x,y,n)=>`<g class="co"><circle cx="${x}" cy="${y}" r="10"/><text x="${x}" y="${y+4}">${n}</text></g>`;
+const lb=(x,y,t,a)=>`<text class="lb" x="${x}" y="${y}" text-anchor="${a||'start'}">${t}</text>`;
+function micSvg(withCase){
+  return `<circle class="f" cx="100" cy="64" r="30"/><path class="t" d="M92 80 Q100 85 108 80"/><circle class="k" cx="90" cy="60" r="2.5"/><circle class="k" cx="110" cy="60" r="2.5"/>
+  <path class="f" d="M28 236 Q32 128 100 118 Q168 128 172 236 Z"/><path class="t" d="M84 120 L100 146 L116 120"/>
+  <rect class="f" x="118" y="146" width="18" height="26" rx="4"/><circle class="on" cx="127" cy="154" r="3.5"/>
+  <path class="d" d="M108 84 L124 144"/>${lb(140,110,'cerca de 20 cm')}
+  <path class="t" d="M146 156 q8 6 0 12 M154 150 q12 12 0 24 M162 144 q16 18 0 36"/>
+  <rect class="f" x="226" y="52" width="52" height="98" rx="8"/><rect class="scr" x="232" y="60" width="40" height="80" rx="3"/>
+  <rect class="f" x="242" y="152" width="20" height="26" rx="4"/><circle class="on" cx="252" cy="160" r="3"/>
+  ${lb(270,174,'receptor')}${lb(110,190,'transmissor')}
+  ${withCase?`<rect class="f" x="196" y="200" width="64" height="30" rx="12"/><path class="t" d="M196 212 H260"/>${lb(266,220,'case')}${co(186,206,1)}`:''}
+  ${co(146,138,2)}${co(282,152,3)}${co(156,92,4)}`;
+}
+const ILL = {
+  tripe:{cap:'Tripé montado com adaptador de celular no topo', svg:`<line class="d" x1="40" y1="228" x2="280" y2="228"/>
+    <path class="s" d="M150 152 L92 226 M170 152 L228 226 M160 154 L163 228"/><rect class="f" x="146" y="146" width="28" height="10" rx="3"/>
+    <rect class="k" x="113" y="185" width="12" height="7" rx="2" transform="rotate(-52 119 189)"/><rect class="k" x="195" y="185" width="12" height="7" rx="2" transform="rotate(52 201 189)"/>
+    <rect class="f" x="154" y="104" width="12" height="44" rx="2"/><rect class="f" x="156" y="74" width="8" height="32" rx="2"/><rect class="f" x="157.5" y="46" width="5" height="30" rx="1.5"/>
+    <rect class="k" x="151" y="101" width="18" height="6" rx="2"/><rect class="k" x="153" y="72" width="14" height="5" rx="2"/>
+    <rect class="f" x="150" y="36" width="20" height="10" rx="2"/><rect class="f" x="128" y="8" width="64" height="30" rx="5"/><rect class="scr" x="134" y="13" width="52" height="20" rx="2"/>
+    ${co(226,184,1)}${lb(240,188,'travas')}${co(186,104,2)}${lb(200,108,'travas da coluna')}${co(208,40,3)}${lb(222,44,'rosca do topo')}`},
+  tripeMedio:{cap:'Tripé médio com câmera presa pela sapata', svg:`<line class="d" x1="40" y1="228" x2="280" y2="228"/>
+    <path class="s" d="M152 142 L84 224 M168 142 L236 224 M160 144 L162 228"/><rect class="f" x="144" y="136" width="32" height="10" rx="3"/>
+    <rect class="f" x="155" y="112" width="10" height="26" rx="2"/><rect class="f" x="142" y="98" width="36" height="16" rx="3"/>
+    <path class="s" style="stroke-width:5" d="M178 106 L256 128"/><rect class="k" x="246" y="120" width="22" height="10" rx="4" transform="rotate(16 257 125)"/>
+    <rect class="k" x="132" y="91" width="56" height="7" rx="2"/>
+    <rect class="f" x="118" y="52" width="84" height="38" rx="6"/><rect class="f" x="138" y="42" width="26" height="10" rx="2"/>
+    <rect class="f" x="202" y="58" width="30" height="26" rx="4"/><rect class="f" x="232" y="55" width="6" height="32" rx="2"/>
+    ${co(70,184,1)}${lb(70,206,'pernas','middle')}${co(112,98,2)}${lb(98,120,'sapata','middle')}${co(282,132,3)}${lb(282,154,'manopla','middle')}`},
+  ledPequeno:{cap:'LED pequeno iluminando o rosto de lado', svg:`<path class="f" d="M198 236 Q204 150 250 144 Q296 150 302 236 Z"/><circle class="f" cx="250" cy="100" r="32"/>
+    <circle class="k" cx="240" cy="96" r="2.5"/><circle class="k" cx="260" cy="96" r="2.5"/><path class="t" d="M242 114 Q250 119 258 114"/>
+    <polygon class="lt" points="116,68 136,142 226,118 224,84"/>
+    <g transform="rotate(-18 76 104)"><rect class="f" x="36" y="74" width="82" height="60" rx="8"/><rect class="lt" x="44" y="82" width="66" height="44" rx="3"/>
+    <circle class="f" cx="128" cy="96" r="7"/><rect class="k" x="66" y="134" width="22" height="8" rx="2"/><rect class="f" x="30" y="94" width="6" height="16" rx="2"/></g>
+    <path class="d" d="M250 100 L150 100"/><path class="t" d="M196 100 A54 54 0 0 0 204 74"/>${lb(206,92,'45°')}
+    ${co(22,96,1)}${lb(22,78,'carga','middle')}${co(148,64,2)}${lb(148,46,'brilho e cor','middle')}${co(76,170,3)}${lb(76,192,'encaixe','middle')}${co(186,128,4)}`},
+  ledGrande:{cap:'LED grande no tripé, de lado para a pessoa', svg:`<line class="d" x1="20" y1="220" x2="300" y2="220"/>
+    <path class="s" d="M76 150 L44 218 M86 150 L118 218 M81 152 L82 220"/><rect class="f" x="70" y="146" width="22" height="8" rx="3"/>
+    <rect class="f" x="78" y="88" width="6" height="60" rx="2"/><path class="s" d="M60 86 L60 80 L102 80 L102 86"/>
+    <rect class="f" x="38" y="24" width="88" height="58" rx="6"/><rect class="lt" x="45" y="31" width="74" height="44" rx="2"/>
+    <path class="t" d="M84 120 Q100 200 150 204"/><rect class="f" x="150" y="196" width="16" height="14" rx="3"/><path class="t" d="M166 200 h8 M166 206 h8"/>
+    <polygon class="lt" points="126,30 126,78 250,74 250,56"/>
+    <path class="f" d="M234 220 Q236 120 262 112 Q288 120 290 220 Z"/><circle class="f" cx="262" cy="80" r="22"/><circle class="k" cx="254" cy="78" r="2.5"/>
+    <path class="t" d="M84 232 L234 232 M84 232 l6 -4 M84 232 l6 4 M234 232 l-6 -4 M234 232 l-6 4"/>
+    ${co(104,98,1)}${lb(118,102,'rosca firme')}${co(190,186,2)}${lb(204,190,'fonte')}<rect x="132" y="224" width="60" height="16" fill="var(--surface-2)"/>${co(142,232,3)}${lb(156,236,'1 a 2 m')}`},
+  ring:{cap:'Ring light no tripé com o celular no centro', svg:`<line class="d" x1="40" y1="228" x2="280" y2="228"/>
+    <path class="s" d="M152 172 L104 226 M168 172 L216 226 M160 174 L162 228"/><rect class="f" x="146" y="166" width="28" height="8" rx="3"/>
+    <rect class="f" x="157" y="134" width="6" height="34" rx="2"/><rect class="f" x="152" y="126" width="16" height="10" rx="2"/>
+    <circle cx="160" cy="70" r="52" fill="none" stroke="var(--use)" stroke-opacity=".45" stroke-width="12"/><circle class="s" cx="160" cy="70" r="58"/><circle class="s" cx="160" cy="70" r="46"/>
+    <path class="s" d="M160 116 L160 94"/><rect class="f" x="147" y="44" width="26" height="48" rx="5"/><rect class="scr" x="151" y="50" width="18" height="36" rx="2"/>
+    <path class="t" d="M168 134 Q200 140 208 160"/><rect class="f" x="200" y="160" width="16" height="24" rx="4"/><circle class="k" cx="208" cy="168" r="2.5"/>
+    <path class="t" d="M208 184 Q212 214 248 214"/><rect class="f" x="248" y="208" width="18" height="12" rx="2"/>
+    ${co(134,132,1)}${co(278,206,2)}${lb(278,198,'USB','middle')}${co(232,170,3)}${lb(246,174,'controle')}${co(198,40,4)}`},
+  micHP:{cap:'Transmissor preso na roupa e receptor no celular', svg:micSvg(false)},
+  djiMic3:{cap:'Transmissor preso na roupa e receptor no celular', svg:micSvg(true)},
+  teleprompter:{cap:'Teleprompter visto de lado: o texto reflete no vidro', svg:`<rect class="f" x="44" y="184" width="196" height="8" rx="3"/><path class="s" d="M140 192 L112 236 M150 192 L178 236 M145 192 L146 236"/>
+    <rect class="f" x="108" y="172" width="98" height="10" rx="3"/><rect class="scr" x="114" y="172" width="86" height="4"/>
+    <line x1="110" y1="170" x2="198" y2="82" stroke="var(--focus)" stroke-width="5" stroke-opacity=".55" stroke-linecap="round"/>
+    <path class="d" d="M160 172 L160 120 L248 120"/>
+    <rect class="f" x="46" y="106" width="38" height="30" rx="4"/><rect class="f" x="84" y="112" width="14" height="18" rx="3"/><rect class="k" x="98" y="110" width="4" height="22" rx="1"/><path class="s" d="M65 136 L65 184"/>
+    <path class="f" d="M244 236 Q248 152 274 146 Q300 152 304 236 Z"/><circle class="f" cx="274" cy="118" r="22"/><circle class="k" cx="264" cy="114" r="2.5"/>
+    <rect class="f" x="214" y="200" width="16" height="28" rx="5"/><circle class="k" cx="222" cy="210" r="2.5"/><circle class="k" cx="222" cy="219" r="2"/>
+    <path class="t" d="M210 204 q-6 -6 0 -12 M204 208 q-12 -10 0 -22"/>
+    ${co(96,172,1)}${lb(44,210,'tela com','middle')}${lb(44,223,'o texto','middle')}<path class="t" d="M60 204 L88 180"/>${co(212,74,2)}${lb(226,70,'vidro')}${co(92,96,3)}${lb(28,90,'câmera')}${co(244,212,4)}${co(206,132,5)}`},
+  celular:{cap:'Horizontal para site e YouTube, vertical para Reels e Stories', svg:`
+    <rect class="f" x="84" y="30" width="24" height="18" rx="3"/><path class="s" d="M89 30 V24 a7 7 0 0 1 14 0 V30"/>
+    <rect class="f" x="26" y="70" width="136" height="72" rx="10"/><rect class="scr" x="36" y="78" width="116" height="56" rx="3"/>
+    <rect class="f" x="200" y="34" width="72" height="136" rx="10"/><rect class="scr" x="208" y="44" width="56" height="116" rx="3"/>
+    ${lb(94,166,'Site e YouTube','middle')}${lb(236,190,'Reels e Stories','middle')}
+    ${co(124,36,1)}${co(181,104,3)}`}
+};
+const MAN_KEY = {1:'tripe',2:'tripe',3:'tripe',4:'tripeMedio',5:'ledPequeno',6:'ledGrande',7:'ring',8:'micHP',9:'celular',10:'teleprompter',11:'djiMic3',12:'celular',100:'teleprompter'};
+function manualContent(n){
+  const m=MANUAIS[MAN_KEY[n]]; if(!m) return [h('p',{class:'note',text:'Manual ainda não cadastrado.'})];
+  const il=ILL[MAN_KEY[n]]; const wrap=h('figure',{class:'ill-wrap',style:'margin:12px 0 4px'});
+  if(il){ wrap.innerHTML=`<svg class="ill" viewBox="0 0 320 240" role="img" aria-label="${il.cap}" xmlns="http://www.w3.org/2000/svg">${il.svg}</svg>`; wrap.append(h('figcaption',{class:'ill-cap',text:il.cap+'. Os números indicam os passos.'})); }
+  return [ il?wrap:null,
+    h('h4',{text:'Como usar'}), h('ol',null,m.passos.map(t=>h('li',{text:t}))),
+    h('h4',{text:'Cuidados'}), h('div',{class:'man-warn'},h('ul',null,m.cuidados.map(t=>h('li',{text:t})))),
+    h('h4',{text:'Ao devolver'}), h('p',{style:'margin:0',text:m.devolver}),
+    h('div',{class:'actions',style:'margin-top:14px'}, h('button',{type:'button',class:'btn small',text:'Baixar este manual em PDF',onclick:ev=>downloadManual(n, ev.currentTarget)}))
+  ];
+}
+function openManual(n){
+  const e=EQUIP.find(x=>x.n===n); if(!e) return;
+  $('manDlg').dataset.n=String(n); $('manNo').textContent=tagOf(n); $('manTitle').textContent=e.nome;
+  $('manBody').replaceChildren(...manualContent(n));
+  const d=$('manDlg'); if(typeof d.showModal==='function') d.showModal(); else d.setAttribute('open','');
+}
+
+const CHAVES = ['Carol Kossling','Vivian Rúbia','Marina Monteiro'];
+const OC_LABEL = {avaria:'Avaria ou defeito', perda:'Perda ou furto', manutencao:'Enviado para manutenção', liberado:'Voltou da manutenção'};
+const EST_LABEL = {ok:'Tudo certo', avaria:'Com avaria', faltando:'Faltando peça'};
+const TIPO_LABEL = {retirada:'Retirada', devolucao:'Devolução', ocorrencia:'Ocorrência'};
+const SECTIONS = ['inicio','painel','registrar','historico','indicadores','regras'];
+const PUBLIC_SECTIONS = ['inicio','registrar'];
+let isPublic = true;
+const eqName = n => { const e=EQUIP.find(x=>x.n===n); return e ? e.nome+(e.baixa?' (baixado)':'') : 'Item '+n; };
+const pad2 = n => String(n).padStart(2,'0');
+const tagOf = n => { const e=EQUIP.find(x=>x.n===n); return (e&&e.tag)||pad2(n); };
+
+/* ---------- Estado ---------- */
+let db=null, assets=true, downloads=null, userCap=null, myId=null;
+let movs=[]; let loaded=false; let canWrite=null;
+let tipo='retirada'; let files=[]; let lastSaved=null; let shareFiles=[]; let shareFailed=false;
+
+/* ---------- Utilidades ---------- */
+const $ = id => document.getElementById(id);
+function h(tag, attrs, ...kids){
+  const el=document.createElement(tag);
+  if(attrs) for(const k in attrs){
+    const v=attrs[k]; if(v==null||v===false) continue;
+    if(k==='class') el.className=v; else if(k==='text') el.textContent=v;
+    else if(k.startsWith('on')) el.addEventListener(k.slice(2),v);
+    else el.setAttribute(k, v===true?'':v);
+  }
+  for(const c of kids.flat()){ if(c==null||c===false) continue; el.append(c.nodeType?c:document.createTextNode(String(c))); }
+  return el;
+}
+const fmtDT = iso => { const d=new Date(iso); if(isNaN(d)) return '–'; return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+const fmtT = iso => { const d=new Date(iso); return isNaN(d)?'–':d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+function fmtWhen(ts){
+  const d=new Date(ts); if(isNaN(d)) return '–';
+  const today=new Date(); const tom=new Date(); tom.setDate(today.getDate()+1);
+  const same=(a,b)=>a.toDateString()===b.toDateString();
+  const t=fmtT(d);
+  if(same(d,today)) return 'hoje às '+t;
+  if(same(d,tom)) return 'amanhã às '+t;
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+t;
+}
+function fmtDur(ms){ if(!isFinite(ms)||ms<0) return '–'; const hTot=ms/36e5; if(hTot<1) return Math.round(ms/6e4)+' min'; if(hTot<48) return hTot.toFixed(1).replace('.',',')+' h'; return Math.round(hTot/24)+' dias'; }
+function endOfDay(iso){ const d=new Date(iso); d.setHours(19,0,0,0); return d.getTime(); }
+const safeAsset = id => typeof id==='string' && /^[A-Za-z0-9_-]{6,80}$/.test(id);
+const normName = s => String(s||'').trim().replace(/\s+/g,' ');
+
+/* ---------- Cálculo de status ---------- */
+function compute(){
+  const st={}; EQUIP.forEach(e=>st[e.n]={estado:'disp'});
+  const sessions=[]; const open={};
+  for(const m of movs){
+    const its=(Array.isArray(m.itens)?m.itens:[]).map(Number).filter(n=>st[n]);
+    const at=m.criadoEm;
+    if(m.tipo==='retirada'){
+      its.forEach(n=>{
+        const due = m.previsao ? Date.parse(m.previsao) : endOfDay(at);
+        st[n]={estado:'uso', nome:m.nome, desde:at, due, chave:m.chave};
+        const s={n, nome:normName(m.nome), inicio:Date.parse(at), due, fim:null}; sessions.push(s); open[n]=s;
+      });
+    } else if(m.tipo==='devolucao'){
+      its.forEach(n=>{
+        if(open[n]){ open[n].fim=Date.parse(at); delete open[n]; }
+        st[n] = m.estado==='ok' ? {estado:'disp', ultimo:m.nome, ate:at}
+          : {estado:'manut', motivo:m.estado==='avaria'?'Devolvido com avaria':'Devolvido faltando peça', desde:at, obs:m.obs};
+      });
+    } else if(m.tipo==='ocorrencia'){
+      its.forEach(n=>{
+        if(m.ocTipo==='liberado'){ st[n]={estado:'disp', ate:at}; }
+        else { if(open[n]){ open[n].fim=Date.parse(at); delete open[n]; } st[n]={estado:'manut', motivo:OC_LABEL[m.ocTipo]||'Ocorrência', desde:at, obs:m.obs}; }
+      });
+    }
+  }
+  const now=Date.now();
+  Object.values(st).forEach(s=>{ if(s.estado==='uso' && now>s.due) s.atrasado=true; });
+  return {st, sessions};
+}
+
+/* ---------- Painel ---------- */
+function renderBoard(){
+  const {st}=compute(); const grid=$('grid'); grid.replaceChildren();
+  let c={disp:0,uso:0,late:0,manut:0}; const late=[];
+  ATIVOS.forEach(e=>{
+    const s=st[e.n]; let cls, pill; const det=[];
+    if(s.estado==='disp'){ cls='s-disp'; pill='Disponível'; c.disp++;
+      if(s.ultimo) det.push(h('div',null,'Último uso: ',h('strong',{text:normName(s.ultimo)}),' até ',fmtWhen(s.ate)));
+    } else if(s.estado==='uso'){
+      c.uso++; if(s.atrasado){ cls='s-late'; pill='Atrasado'; c.late++; late.push({e,s}); } else { cls='s-uso'; pill='Em uso'; }
+      det.push(h('div',null,'Com ',h('strong',{text:normName(s.nome)}),' desde ',fmtWhen(s.desde)));
+      det.push(h('div',null,(s.atrasado?'Deveria ter voltado ':'Devolução prevista ')+fmtWhen(s.due)));
+    } else { cls='s-manut'; pill=s.motivo; c.manut++;
+      det.push(h('div',null,'Desde ',fmtWhen(s.desde)));
+      if(s.obs) det.push(h('div',{text:String(s.obs).slice(0,90)}));
+    }
+    grid.append(h('article',{class:'tag '+cls, id:'eq-'+e.n},
+      h('div',{class:'no',text:tagOf(e.n)}), h('span',{class:'hole','aria-hidden':'true'}),
+      h('p',{class:'name',text:e.nome}), h('span',{class:'pill',text:pill}), h('div',{class:'det'},det),
+      h('button',{type:'button',class:'btn small man-btn',text:'Como usar',onclick:()=>openManual(e.n)})));
+  });
+  const show = v => loaded ? String(v) : '–';
+  $('cDisp').textContent=show(c.disp); $('cUso').textContent=show(c.uso-c.late); $('cLate').textContent=show(c.late); $('cManut').textContent=show(c.manut);
+  const al=$('alerts');
+  if(late.length){
+    al.replaceChildren(h('strong',{text: late.length===1?'1 equipamento passou do horário de devolução':late.length+' equipamentos passaram do horário de devolução'}),
+      h('ul',null, late.map(({e,s})=>h('li',null,'#'+tagOf(e.n)+' '+e.nome+', com '+normName(s.nome)+' (previsto '+fmtWhen(s.due)+')'))));
+    al.hidden=false;
+  } else al.hidden=true;
+  $('updated').textContent = loaded ? 'Atualiza a cada minuto. Última verificação: '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'.' : 'Carregando registros…';
+}
+
+/* ---------- Formulário ---------- */
+function renderItems(){
+  const {st}=compute(); const box=$('fItens'); const prev=new Set([...box.querySelectorAll('input:checked')].map(i=>Number(i.value)));
+  box.replaceChildren();
+  const lbl=$('lblItens'), hint=$('hintItens');
+  if(tipo==='retirada'){ lbl.textContent='Equipamentos que você está retirando'; hint.textContent='Só dá para marcar os que estão disponíveis agora.'; }
+  else if(tipo==='devolucao'){ lbl.textContent='Equipamentos que você está devolvendo'; hint.textContent='Aparecem os que estão registrados como em uso.'; }
+  else { lbl.textContent='Equipamento envolvido'; hint.textContent='Marque um ou mais.'; }
+  let any=false;
+  ATIVOS.forEach(e=>{
+    const s=st[e.n]; let enabled=true, sub='';
+    if(tipo==='retirada'){ enabled = s.estado==='disp'; sub = s.estado==='uso' ? 'Em uso com '+normName(s.nome) : s.estado==='manut' ? s.motivo : ''; }
+    else if(tipo==='devolucao'){ if(s.estado!=='uso') return; sub='Com '+normName(s.nome)+(s.atrasado?' (atrasado)':''); }
+    else { sub = s.estado==='uso'?'Em uso com '+normName(s.nome): s.estado==='manut'? s.motivo : 'Disponível'; }
+    any=true;
+    const inp=h('input',{type:'checkbox', value:e.n, disabled:!enabled, checked: enabled && prev.has(e.n)});
+    inp.addEventListener('change', updateKitHint);
+    box.append(h('label',{class:'choice'+(enabled?'':' off')}, inp, h('span',null,h('span',{class:'cn',text:tagOf(e.n)}),' ',e.nome, sub?h('small',{text:sub}):null)));
+  });
+  if(!any) box.append(h('p',{class:'note',text: tipo==='devolucao'?'Nenhum equipamento está registrado como em uso agora.':'Nenhum equipamento disponível.'}));
+  updateKitHint();
+}
+function selectedItems(){ return [...$('fItens').querySelectorAll('input:checked')].map(i=>Number(i.value)); }
+function updateKitHint(){
+  const its=selectedItems(); const parts=its.map(n=>{const e=EQUIP.find(x=>x.n===n); return '#'+tagOf(n)+': '+e.kit.join(', ');});
+  $('kitHint').textContent = parts.length ? parts.join(' | ') : '';
+}
+function renderChaves(){
+  const box=$('fChave'); box.replaceChildren();
+  CHAVES.forEach((c,i)=>box.append(h('label',{class:'choice'},h('input',{type:'radio',name:'chave',value:c}),h('span',{text:c}))));
+}
+function setTipo(t){
+  tipo=t;
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.tipo===t)));
+  document.querySelectorAll('[data-show]').forEach(el=>{ el.hidden = !el.dataset.show.split(' ').includes(t); });
+  $('lblChave').textContent = t==='devolucao' ? 'Chave devolvida a' : 'Chave entregue por';
+  $('lblObs').textContent = t==='ocorrencia' ? 'Descreva o que aconteceu' : t==='devolucao' ? 'Observações (obrigatório se houver avaria ou peça faltando)' : 'Observações';
+  updatePhotoHint();
+  $('formErr').hidden=true;
+  renderItems();
+}
+function updatePhotoHint(){
+  const need = tipo!=='ocorrencia';
+  $('photoBtn').hidden=false;
+  $('photoHint').textContent = need ? 'Obrigatório. Tire fotos com o kit aberto e todos os acessórios aparecendo.' : 'Se possível, mostre o problema na foto.';
+}
+function defaultPrev(){
+  const d=new Date(); if(d.getHours()>=17) { d.setHours(d.getHours()+2, 0, 0, 0); } else d.setHours(18,0,0,0);
+  const v=d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes());
+  $('fPrev').value=v;
+}
+function renderPhotos(){
+  const box=$('photoPrev'); box.querySelectorAll('img').forEach(i=>URL.revokeObjectURL(i.src)); box.replaceChildren();
+  files.forEach((f,i)=>{ const img=h('img',{alt:'Foto '+(i+1)}); img.src=URL.createObjectURL(f); box.append(img); });
+  if(files.length) box.append(h('button',{type:'button',class:'btn small',text:'Remover fotos',onclick:()=>{files=[];$('fFotos').value='';renderPhotos();}}));
+}
+async function compress(file){
+  try{
+    const bmp=await createImageBitmap(file); const max=1600; const s=Math.min(1,max/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas'); c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    return await new Promise(r=>c.toBlob(b=>r(b||file),'image/jpeg',0.82));
+  }catch(e){ return file; }
+}
+function canShareFiles(fs){ try{ return !!(fs && fs.length && navigator.share && navigator.canShare && navigator.canShare({files:fs})); }catch(e){ return false; } }
+function showErr(msg){ const e=$('formErr'); e.textContent=msg; e.hidden=false; }
+
+async function onSubmit(ev){
+  ev.preventDefault(); $('formErr').hidden=true;
+  const nome=normName($('fNome').value); const itens=selectedItems();
+  const chaveEl=document.querySelector('input[name="chave"]:checked'); const chave=chaveEl?chaveEl.value:'';
+  const obs=$('fObs').value.trim(); const kitOk=$('fKit').checked;
+  const estado=(document.querySelector('input[name="estado"]:checked')||{}).value||'ok';
+  const ocTipo=(document.querySelector('input[name="oc"]:checked')||{}).value||'avaria';
+  if(!nome) return showErr('Escreva seu nome.');
+  if(!itens.length) return showErr('Marque pelo menos um equipamento.');
+  if(tipo!=='ocorrencia' && !chave) return showErr(tipo==='retirada'?'Diga quem entregou a chave.':'Diga para quem você devolveu a chave.');
+  if(tipo!=='ocorrencia' && !kitOk) return showErr('Confira o kit completo e marque a caixa de conferência.');
+  if(tipo==='devolucao' && estado!=='ok' && !obs) return showErr('Descreva a avaria ou a peça que está faltando.');
+  if(tipo==='ocorrencia' && !obs) return showErr('Descreva o que aconteceu.');
+  if(tipo!=='ocorrencia' && !files.length) return showErr('Adicione pelo menos uma foto de como estão os equipamentos.');
+  let previsao='';
+  if(tipo==='retirada'){ const v=$('fPrev').value; const d=v?new Date(v):null; if(!d||isNaN(d)) return showErr('Informe quando vai devolver.'); previsao=d.toISOString(); }
+
+  const btn=$('saveBtn'); btn.disabled=true; const status=$('saveStatus');
+  try{
+    const fotos64=[]; shareFiles=[]; shareFailed=false;
+    for(let i=0;i<files.length;i++){
+      status.textContent='Preparando foto '+(i+1)+' de '+files.length+'…';
+      const blob=await compress(files[i]);
+      shareFiles.push(new File([blob],'foto-'+(i+1)+'.jpg',{type:'image/jpeg'}));
+      fotos64.push(await blobToB64(blob));
+    }
+    status.textContent = files.length ? 'Enviando registro e fotos…' : 'Salvando…';
+    const row={tipo, nome, itens, chave, uso: tipo==='retirada'?$('fUso').value.trim():'', previsao,
+      estado: tipo==='devolucao'?estado:'', ocTipo: tipo==='ocorrencia'?ocTipo:'', obs, kitOk: tipo==='ocorrencia'?null:kitOk};
+    const r=await server('saveRecord', Object.assign({fotos:fotos64}, row));
+    lastSaved=Object.assign({}, row, {id:r.id, criadoEm:r.criadoEm, fotos:r.fotos, nFotos:r.nFotos, wpp:false});
+    movs.push(lastSaved);
+    try{ localStorage.setItem('eqc-nome', nome); }catch(e){}
+    showSuccess();
+  }catch(err){
+    const msg=err&&err.message||'';
+    if(msg.indexOf('AVISO:')>=0) showErr(msg.slice(msg.indexOf('AVISO:')+6).trim());
+    else showErr('O registro não foi salvo. Verifique a internet e tente de novo.');
+    loadData();
+  }finally{ btn.disabled=false; status.textContent=''; }
+}
+
+/* ---------- Mensagem de WhatsApp ---------- */
+function buildMsg(m){
+  const its=(m.itens||[]).map(Number).map(n=>'#'+tagOf(n)+' '+eqName(n));
+  const L=[];
+  if(m.tipo==='retirada'){
+    L.push('📤 *RETIRADA DE EQUIPAMENTO*');
+    L.push('👤 '+m.nome);
+    L.push('📦 '+its.join(', '));
+    L.push('🔑 Chave entregue por: '+m.chave);
+    if(m.uso) L.push('🎬 Uso: '+m.uso);
+    if(m.previsao) L.push('⏰ Devolução prevista: '+fmtWhen(m.previsao));
+    L.push('✅ Kit conferido');
+  } else if(m.tipo==='devolucao'){
+    L.push('📥 *DEVOLUÇÃO DE EQUIPAMENTO*');
+    L.push('👤 '+m.nome);
+    L.push('📦 '+its.join(', '));
+    L.push((m.estado==='ok'?'✅ ':'⚠️ ')+'Estado: '+(EST_LABEL[m.estado]||'–'));
+    L.push('🔑 Chave devolvida a: '+m.chave);
+    if(m.obs) L.push('📝 '+m.obs);
+  } else {
+    L.push('⚠️ *OCORRÊNCIA*');
+    L.push('👤 '+m.nome);
+    L.push('📦 '+its.join(', '));
+    L.push('❗ '+(OC_LABEL[m.ocTipo]||'Ocorrência'));
+    if(m.obs) L.push('📝 '+m.obs);
+  }
+  const nf=(m.fotos||[]).length||Number(m.nFotos)||0;
+  if(nf) L.push('📷 '+nf+(nf===1?' foto':' fotos')+' de como estavam os equipamentos');
+  L.push('🕒 '+fmtDT(m.criadoEm));
+  return L.join('\n');
+}
+const wppUrl = text => 'https://wa.me/?text='+encodeURIComponent(text);
+async function markWpp(id){
+  if(!id) return;
+  const m=movs.find(x=>x.id===id); if(m) m.wpp=true;
+  try{ await server('markWpp', id); }catch(e){}
+}
+function showSuccess(){
+  const msg=buildMsg(lastSaved);
+  $('msgPreview').textContent=msg; $('wppBtn').href=wppUrl(msg);
+  const can=canShareFiles(shareFiles);
+  $('wppBtn').textContent = can ? 'Enviar no WhatsApp com as fotos' : 'Enviar no WhatsApp';
+  $('shareNote').textContent = can
+    ? 'Toque no botão, escolha o WhatsApp e depois o grupo: as fotos e o texto vão juntos. O texto também fica copiado; se ele não aparecer como legenda, é só colar.'
+    : 'Este aparelho não permite anexar fotos automaticamente. O WhatsApp vai abrir com a mensagem pronta: escolha o grupo e anexe as fotos manualmente.';
+  const ml=$('manLinks'); ml.replaceChildren();
+  if(lastSaved.tipo==='retirada'){ (lastSaved.itens||[]).map(Number).forEach(n=>{ const e=EQUIP.find(x=>x.n===n); if(e) ml.append(h('button',{type:'button',class:'btn small',text:'Como usar: '+tagOf(n)+' '+e.nome,onclick:()=>openManual(n)})); }); }
+  $('manLinksBox').hidden = !ml.childNodes.length;
+  $('formCard').hidden=true; $('successCard').hidden=false; $('successCard').scrollIntoView({block:'start',behavior:'smooth'});
+}
+async function copyText(text, btn){
+  let ok=false;
+  try{ await navigator.clipboard.writeText(text); ok=true; }catch(e){
+    const ta=h('textarea',{style:'position:fixed;opacity:0'}); ta.value=text; document.body.append(ta); ta.select();
+    try{ ok=document.execCommand('copy'); }catch(_){} ta.remove();
+  }
+  const old=btn.textContent; btn.textContent= ok?'Mensagem copiada':'Não deu para copiar'; setTimeout(()=>{btn.textContent=old;},2200);
+}
+function resetForm(){
+  $('form').reset(); files=[]; shareFiles=[]; shareFailed=false; renderPhotos(); defaultPrev();
+  try{ const n=localStorage.getItem('eqc-nome'); if(n) $('fNome').value=n; }catch(e){}
+  $('successCard').hidden=true; $('formCard').hidden=false; setTipo(tipo);
+}
+
+/* ---------- Histórico ---------- */
+function renderHistory(){
+  const ft=$('hTipo').value, fi=Number($('hItem').value)||0; const body=$('hBody'); body.replaceChildren();
+  const rows=movs.slice().reverse().filter(m=>(!ft||m.tipo===ft)&&(!fi||(m.itens||[]).map(Number).includes(fi)));
+  if(!rows.length){ body.append(h('tr',null,h('td',{colspan:'8',class:'empty',text: loaded?'Nenhum registro ainda. O primeiro aparece aqui assim que alguém registrar uma retirada.':'Carregando…'}))); return; }
+  rows.slice(0,300).forEach(m=>{
+    const its=(m.itens||[]).map(Number).map(n=>'#'+tagOf(n)+' '+eqName(n)).join(', ');
+    let sit='';
+    if(m.tipo==='retirada') sit = m.previsao ? 'Devolver '+fmtWhen(m.previsao) : '';
+    else if(m.tipo==='devolucao') sit = EST_LABEL[m.estado]||'';
+    else sit = OC_LABEL[m.ocTipo]||'';
+    if(m.obs) sit += (sit?'. ':'')+m.obs;
+    const th=h('div',{class:'thumbs'}); (m.fotos||[]).filter(u=>/^https:\/\//.test(u)).forEach((u,i)=>{ th.append(h('a',{href:u,target:'_blank',rel:'noopener',class:'btn small',text:'Foto '+(i+1)})); });
+    const g = m.wpp ? h('span',{class:'yes',text:'Avisado'}) : h('a',{class:'btn small',href:wppUrl(buildMsg(m)),target:'_blank',rel:'noopener noreferrer',text:'Enviar',onclick:()=>{ markWpp(m.id); setTimeout(renderHistory,300); }});
+    body.append(h('tr',null,
+      h('td',{text:fmtDT(m.criadoEm)}), h('td',null,h('span',{class:'badge t-'+m.tipo,text:TIPO_LABEL[m.tipo]||m.tipo})),
+      h('td',{text:normName(m.nome)}), h('td',{text:its}), h('td',{text:m.chave||'–'}), h('td',{text:sit||'–'}), h('td',null,th.childNodes.length?th:'–'), h('td',null,g)));
+  });
+}
+function csvCell(v){ const s=v==null?'':String(v); return /[;"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+async function downloadCsv(btn){
+  const head=['Data','Hora','Tipo','Nome','Equipamentos','Chave','Uso','Devolução prevista','Estado na devolução','Ocorrência','Observações','Kit conferido','Qtde fotos','Avisado no grupo'];
+  const lines=[head.join(';')];
+  movs.forEach(m=>{ const d=new Date(m.criadoEm);
+    lines.push([d.toLocaleDateString('pt-BR'), fmtT(m.criadoEm), TIPO_LABEL[m.tipo]||m.tipo, normName(m.nome),
+      (m.itens||[]).map(Number).map(n=>tagOf(n)+' '+eqName(n)).join(', '), m.chave, m.uso, m.previsao?fmtDT(m.previsao):'',
+      EST_LABEL[m.estado]||'', OC_LABEL[m.ocTipo]||'', m.obs, m.kitOk==null?'':(m.kitOk?'Sim':'Não'), (m.fotos||[]).length, m.wpp?'Sim':'Não'].map(csvCell).join(';'));
+  });
+  const data=new TextEncoder().encode('\uFEFF'+lines.join('\r\n'));
+  const t=new Date(); const fn='planilha-equipamentos-'+t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate())+'.csv';
+  await saveFile(fn, data, btn);
+}
+async function saveFile(filename, data, btn){
+  try{ const url=URL.createObjectURL(new Blob([data])); const a=h('a',{href:url,download:filename}); document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); }
+  catch(e){ const o=btn.textContent; btn.textContent='Não foi possível baixar'; setTimeout(()=>btn.textContent=o,2500); }
+}
+
+/* ---------- Indicadores ---------- */
+function renderKpis(){
+  const p=$('period').value; const now=new Date(); let from=0;
+  if(p==='7') from=now.getTime()-7*864e5; else if(p==='30') from=now.getTime()-30*864e5; else if(p==='month') from=new Date(now.getFullYear(),now.getMonth(),1).getTime();
+  const inP=movs.filter(m=>Date.parse(m.criadoEm)>=from);
+  const {sessions}=compute(); const ses=sessions.filter(s=>s.inicio>=from);
+  const ret=inP.filter(m=>m.tipo==='retirada'); const rd=inP.filter(m=>m.tipo!=='ocorrencia');
+  const pct=(a,b)=> b? Math.round(a*100/b)+'%' : '–';
+  const show=v=>loaded?v:'–';
+  $('kRet').textContent=show(String(ret.length));
+  $('kWpp').textContent=show(pct(inP.filter(m=>m.wpp).length, inP.length));
+  $('kFoto').textContent=show(pct(rd.filter(m=>(m.fotos||[]).length).length, rd.length));
+  const closed=ses.filter(s=>s.fim); $('kPrazo').textContent=show(pct(closed.filter(s=>s.fim<=s.due).length, closed.length));
+  $('kTempo').textContent=show(closed.length? fmtDur(closed.reduce((a,s)=>a+(s.fim-s.inicio),0)/closed.length) : '–');
+  $('kOc').textContent=show(String(inP.filter(m=>m.tipo==='ocorrencia').length));
+  const byEq={}; ses.forEach(s=>byEq[s.n]=(byEq[s.n]||0)+1);
+  drawBars($('barsEq'), EQUIP.filter(e=>!e.baixa||byEq[e.n]).map(e=>({l:tagOf(e.n)+' '+eqName(e.n), v:byEq[e.n]||0})).sort((a,b)=>b.v-a.v));
+  const byP={}; const disp={}; ret.forEach(m=>{ const k=normName(m.nome).toLowerCase(); byP[k]=(byP[k]||0)+1; disp[k]=normName(m.nome); });
+  drawBars($('barsPes'), Object.keys(byP).map(k=>({l:disp[k], v:byP[k]})).sort((a,b)=>b.v-a.v).slice(0,10));
+}
+function drawBars(box, data){
+  box.replaceChildren(); const max=Math.max(1,...data.map(d=>d.v));
+  if(!data.length||!data.some(d=>d.v)){ box.append(h('p',{class:'note',text:'Sem retiradas no período.'})); return; }
+  data.forEach(d=>{ const fill=h('div',{class:'bar-fill'}); fill.style.width=(d.v*100/max)+'%';
+    box.append(h('div',{class:'bar-row',title:d.l+': '+d.v}, h('span',{class:'bl',text:d.l}), h('div',{class:'bar-track'},fill), h('span',{class:'bv',text:String(d.v)}))); });
+}
+
+/* ---------- Como funciona ---------- */
+function renderRules(){
+  $('manList').replaceChildren(...ATIVOS.map(e=>h('details',{class:'man-item'},h('summary',{text:tagOf(e.n)+' '+e.nome}),h('div',{class:'man-body'},manualContent(e.n)))));
+  const steps=['Pegue a chave do armário com '+CHAVES.slice(0,-1).join(', ')+' ou '+CHAVES[CHAVES.length-1]+'.',
+    'Escaneie o QR Code do armário e registre a retirada: equipamentos, conferência do kit e fotos de como estão.',
+    'Toque em “Enviar no WhatsApp”, escolha o grupo da comunicação e anexe as fotos.',
+    'Na devolução, registre de novo: como os equipamentos voltaram, fotos e para quem devolveu a chave.',
+    'Envie o resumo da devolução no grupo.'];
+  $('stepsList').replaceChildren(...steps.map(s=>h('li',{text:s})));
+  $('keyList').replaceChildren(...CHAVES.map(c=>h('li',{text:c})));
+  $('kits').replaceChildren(...ATIVOS.map(e=>h('div',{class:'kit'},h('b',{text:tagOf(e.n)+' '+e.nome}),h('ul',null,e.kit.map(k=>h('li',{text:k}))))));
+  $('baixados').replaceChildren(...EQUIP.filter(e=>e.baixa).map(e=>h('div',{class:'kit'},h('b',{text:tagOf(e.n)+' '+e.nome}),h('p',{class:'note',style:'margin:4px 0 0',text:e.baixa}))));
+}
+
+/* ---------- Manual em PDF ---------- */
+const PRINT_COLORS={'--ink':'#80172C','--surface':'#FFFFFF','--surface-2':'#FEF7DD','--use':'#BFA36D','--focus':'#105188','--muted':'#6B5B55','--ok':'#2E7D4F','--line':'#EADCB8'};
+const LOGO_SVG_PRINT='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 748.21 234.04" width="1496" height="468"><g fill="#80172C">'+'<g> <g> <g> <g> <g> <path d="M551.08,62.6h-33.42l-64.89,80.64-64.71-80.64h-33.42c-.14.92-.22,1.89-.22,2.92v92.57h29.32v-57.88l46.36,57.88h45.54l46.34-57.7v57.7h29.32v-92.57c0-1.03-.08-2.01-.23-2.92Z"/> <path d="M251.9,135.2c-17.17,0-25.67-4.16-25.67-12.14v-60.46h-29.32v61.5c0,22.72,17.85,33.99,53.04,34h75.68v-22.9h-73.74Z"/> </g> <rect x="137.78" y="62.6" width="28.46" height="95.5" transform="translate(304.02 220.69) rotate(-180)"/> <path d="M39.31,158.09H0s98.66-83.6,98.66-83.6c9.06-7.68,20.56-11.89,32.44-11.89h20.91s-112.7,95.5-112.7,95.5Z"/> <rect x="581.97" y="62.6" width="28.46" height="95.5"/> <path d="M708.91,158.09h39.31l-98.66-83.6c-9.06-7.68-20.56-11.89-32.44-11.89h-20.91l112.7,95.5Z"/> </g> <g> <path d="M199.89,230.32c-2.82-2.48-4.23-5.93-4.23-10.34h4.97c0,3.27,1.07,5.72,3.22,7.36,2.15,1.64,5.05,2.45,8.72,2.45,3.23,0,5.78-.61,7.66-1.83,1.87-1.22,2.81-3.11,2.81-5.67,0-1.81-.47-3.25-1.42-4.32-.95-1.06-2.14-1.87-3.58-2.42-1.44-.55-3.48-1.18-6.12-1.89-.28-.04-.69-.14-1.24-.3-3.07-.79-5.57-1.65-7.48-2.57-1.91-.93-3.4-2.1-4.46-3.52-1.06-1.42-1.6-3.21-1.6-5.38,0-3.43,1.29-6.02,3.87-7.77,2.58-1.75,6.08-2.63,10.49-2.63,3.35,0,6.14.49,8.36,1.48,2.23.99,3.86,2.35,4.91,4.08,1.04,1.74,1.57,3.72,1.57,5.97h-4.91c0-2.32-.92-4.12-2.75-5.38-1.83-1.26-4.4-1.89-7.71-1.89-2.64,0-4.78.43-6.41,1.3-1.64.87-2.45,2.37-2.45,4.49,0,1.54.43,2.77,1.3,3.69.87.93,1.97,1.64,3.31,2.13,1.34.49,3.21,1.06,5.62,1.69h.06c.24.04.47.1.71.18,3.35.87,6.02,1.7,8.01,2.51,1.99.81,3.63,2,4.91,3.58,1.28,1.58,1.92,3.69,1.92,6.33,0,3.74-1.35,6.75-4.05,9.02-2.7,2.27-6.63,3.4-11.79,3.4s-9.39-1.24-12.21-3.72Z"/> <path d="M271.24,231.32c-3.17-1.81-5.62-4.32-7.33-7.54-1.71-3.21-2.57-6.91-2.57-11.08s.86-7.81,2.57-11.02c1.71-3.21,4.16-5.71,7.33-7.51,3.17-1.79,6.85-2.69,11.02-2.69s7.84.9,11,2.69c3.15,1.79,5.59,4.3,7.3,7.51,1.71,3.21,2.57,6.89,2.57,11.02s-.86,7.87-2.57,11.08c-1.71,3.21-4.15,5.72-7.3,7.54-3.15,1.81-6.82,2.72-11,2.72s-7.85-.91-11.02-2.72ZM290.72,227.81c2.4-1.36,4.27-3.32,5.59-5.88,1.32-2.56,1.98-5.6,1.98-9.1s-.66-6.5-1.98-9.1c-1.32-2.6-3.18-4.59-5.59-5.97-2.4-1.38-5.22-2.07-8.45-2.07s-6.06.69-8.48,2.07c-2.42,1.38-4.3,3.37-5.62,5.97-1.32,2.6-1.98,5.64-1.98,9.1s.66,6.54,1.98,9.1c1.32,2.56,3.19,4.52,5.62,5.88,2.42,1.36,5.25,2.04,8.48,2.04s6.05-.68,8.45-2.04Z"/> <path d="M347.2,231.32c-3.17-1.81-5.62-4.32-7.33-7.54-1.71-3.21-2.57-6.91-2.57-11.08s.86-7.81,2.57-11.02c1.71-3.21,4.16-5.71,7.33-7.51,3.17-1.79,6.85-2.69,11.02-2.69,3.55,0,6.73.65,9.55,1.95,2.82,1.3,5.14,3.13,6.98,5.5,1.83,2.36,3.1,5.14,3.81,8.34h-5.02c-.95-3.63-2.77-6.46-5.47-8.51-2.7-2.05-5.98-3.07-9.84-3.07-3.19,0-6,.7-8.42,2.1-2.42,1.4-4.31,3.39-5.65,5.97-1.34,2.58-2.01,5.61-2.01,9.07s.67,6.54,2.01,9.1c1.34,2.56,3.23,4.52,5.68,5.88,2.44,1.36,5.24,2.04,8.39,2.04,3.86,0,7.15-1.01,9.87-3.04,2.72-2.03,4.55-4.84,5.5-8.42h4.97c-.71,3.15-1.98,5.91-3.81,8.28-1.83,2.36-4.16,4.19-6.98,5.47-2.82,1.28-6,1.92-9.55,1.92-4.18,0-7.85-.91-11.02-2.72Z"/> <path d="M415.68,192.07h4.73v41.38h-4.73v-41.38ZM415.68,192.07h4.73v4.2h-4.73v-4.2ZM415.68,229.26h4.73v4.2h-4.73v-4.2Z"/> <path d="M471.63,192.84c.37-.43.79-.74,1.24-.92.45-.18.98-.27,1.57-.27s1.1.09,1.54.27c.43.18.84.48,1.21.92.37.43.7,1.03.98,1.77l14.66,38.84h-4.97l-13.42-36.83-13.54,36.83h-5.02l14.78-38.84c.28-.75.6-1.34.98-1.77ZM462.97,217.79h22.64v4.08h-22.64v-4.08Z"/> <path d="M527.26,232.71c-.49-.49-.74-1.23-.74-2.22v-38.42h4.73v38.19l-1.83-1.12h22.29v4.32h-22.23c-.99,0-1.72-.25-2.22-.74Z"/> </g> </g> <g> <path d="M227.33.41h4.12v28.83h-4.12V.41ZM227.33.41h4.12v3.58h-4.12V.41ZM227.33,25.66h4.12v3.58h-4.12v-3.58Z"/> <path d="M271.42,29.18c-.45-.26-.9-.65-1.34-1.17l-.04-.08-18.33-24.01,2.59.08v25.25h-4.12V2.64c0-.85.21-1.49.62-1.92.41-.43.95-.64,1.61-.64.41,0,.8.12,1.15.35.36.23.73.6,1.11,1.09l19.19,25.12-2.68-.29V.41h4.12v26.52c0,.82-.23,1.47-.68,1.94-.45.47-1.05.7-1.79.7-.49,0-.97-.13-1.42-.39Z"/> <path d="M294.36,27.04c-1.99-1.74-2.99-4.17-2.99-7.27h4.28c0,2.11.69,3.69,2.08,4.74,1.39,1.04,3.26,1.56,5.62,1.56,2.11,0,3.76-.38,4.94-1.15,1.18-.77,1.77-1.96,1.77-3.58,0-1.1-.29-1.98-.88-2.66-.59-.67-1.36-1.19-2.31-1.56s-2.3-.79-4.06-1.26c-.22-.05-.52-.14-.91-.25-2.17-.55-3.93-1.14-5.27-1.77-1.35-.63-2.39-1.46-3.13-2.47-.74-1.02-1.11-2.32-1.11-3.91,0-2.47.93-4.33,2.78-5.58,1.85-1.25,4.34-1.87,7.47-1.87,2.39,0,4.38.35,5.97,1.05,1.59.7,2.76,1.67,3.5,2.9.74,1.24,1.11,2.66,1.11,4.28h-4.2c0-1.48-.58-2.64-1.75-3.46-1.17-.82-2.82-1.24-4.96-1.24-1.7,0-3.07.28-4.1.84-1.03.56-1.54,1.52-1.54,2.86,0,.99.27,1.78.8,2.37.54.59,1.25,1.05,2.14,1.38.89.33,2.15.7,3.77,1.11h.04c.16.03.33.07.49.12,2.39.6,4.28,1.19,5.68,1.75,1.4.56,2.54,1.39,3.42,2.49.88,1.1,1.32,2.57,1.32,4.41,0,2.66-.97,4.79-2.9,6.38s-4.73,2.39-8.38,2.39-6.72-.87-8.71-2.61Z"/> <path d="M336.05,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M364.84.41h4.12v28.83h-4.12V.41ZM364.84.41h4.12v3.58h-4.12V.41ZM364.84,25.66h4.12v3.58h-4.12v-3.58Z"/> <path d="M393.71,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M426.02,28.03c-1.72-1.08-2.92-2.55-3.62-4.39-.7-1.84-1.05-4.01-1.05-6.51V.41h4.12v16.31c0,1.95.23,3.6.68,4.96s1.24,2.42,2.35,3.19c1.11.77,2.62,1.15,4.51,1.15s3.39-.38,4.49-1.15c1.1-.77,1.87-1.83,2.33-3.19s.68-3.01.68-4.96V.41h4.12v16.72c0,2.5-.34,4.67-1.03,6.51-.69,1.84-1.89,3.3-3.6,4.39-1.72,1.08-4.04,1.63-6.98,1.63s-5.26-.54-6.98-1.63Z"/> <path d="M468.21,4.12h-8.69V.41h21.42v3.71h-8.61v25.12h-4.12V4.12Z"/> <path d="M500.81,27.76c-2.24-1.26-3.96-3.01-5.17-5.25-1.21-2.24-1.81-4.81-1.81-7.72s.6-5.44,1.81-7.68,2.93-3.98,5.17-5.23c2.24-1.25,4.82-1.87,7.76-1.87s5.51.62,7.72,1.87c2.21,1.25,3.91,2.99,5.11,5.23s1.79,4.8,1.79,7.68-.6,5.48-1.79,7.72c-1.19,2.24-2.9,3.99-5.11,5.25-2.21,1.26-4.78,1.89-7.72,1.89s-5.53-.63-7.76-1.89ZM514.09,24.63c1.57-.88,2.77-2.15,3.62-3.81.85-1.66,1.28-3.65,1.28-5.95s-.43-4.26-1.28-5.95c-.85-1.69-2.06-2.98-3.62-3.87-1.56-.89-3.4-1.34-5.52-1.34s-3.97.45-5.56,1.34c-1.59.89-2.81,2.18-3.67,3.87-.85,1.69-1.28,3.67-1.28,5.95s.43,4.29,1.28,5.95c.85,1.66,2.07,2.93,3.67,3.81,1.59.88,3.45,1.32,5.56,1.32s3.95-.44,5.52-1.32Z"/> </g> </g> </g>'+'</g></svg>';
+function svgToPng(svg,w,h){ return new Promise(res=>{ const img=new Image(); img.onload=()=>{ try{ const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h); res(c.toDataURL('image/png')); }catch(e){ res(null); } }; img.onerror=()=>res(null); img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); }); }
+const ILL_PRINT_CSS='.s{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.t{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round}.f{fill:var(--surface);stroke:var(--ink);stroke-width:2.2;stroke-linejoin:round}.k{fill:var(--ink)}.lt{fill:var(--use);opacity:.3}.scr{fill:var(--focus);opacity:.3}.d{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-dasharray:4 4}.on{fill:var(--ok)}.co circle{fill:var(--focus)}.co text{fill:#fff;font:700 12px Arial,Helvetica,sans-serif;text-anchor:middle}.lb{fill:var(--muted);font:600 11px Arial,Helvetica,sans-serif}';
+const fixColors = str => str.replace(/var\((--[a-z0-9-]+)\)/g,(m,v)=>PRINT_COLORS[v]||'#000000');
+function illToPng(key){
+  return new Promise((resolve)=>{
+    const il=ILL[key]; if(!il) return resolve(null);
+    const svg=fixColors(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" width="1280" height="960"><style>${ILL_PRINT_CSS}</style><rect width="320" height="240" rx="10" fill="var(--surface-2)"/>${il.svg}</svg>`);
+    const img=new Image();
+    img.onload=()=>{ try{ const c=document.createElement('canvas'); c.width=1280; c.height=960; c.getContext('2d').drawImage(img,0,0,1280,960); resolve(c.toDataURL('image/png')); }catch(e){ resolve(null); } };
+    img.onerror=()=>resolve(null);
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  });
+}
+const slug = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+async function downloadManual(n, btn){
+  const e=EQUIP.find(x=>x.n===n); const key=MAN_KEY[n]; const m=MANUAIS[key]; if(!e||!m) return;
+  const old=btn.textContent; const done=t=>{ btn.textContent=t; setTimeout(()=>{btn.textContent=old;},2500); };
+  if(!(window.jspdf && window.jspdf.jsPDF)) return done('Não foi possível gerar o PDF');
+  btn.disabled=true; btn.textContent='Gerando PDF…';
+  try{
+    const doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'}); const W=210, H=297, M=18, TW=W-2*M;
+    const INK=[128,23,44], FOCUS=[16,81,136], MUTED=[107,91,85], RED=[210,59,47], REDSOFT=[251,227,224], BEGE=[254,247,221], TXT=[43,29,31];
+    const logoPng=await svgToPng(LOGO_SVG_PRINT,1496,468);
+    let y=0;
+    const header=()=>{ doc.setFillColor(...BEGE); doc.rect(0,0,W,32,'F'); doc.setFillColor(...INK); doc.rect(0,32,W,1.2,'F');
+      if(logoPng) doc.addImage(logoPng,'PNG',W-M-42,6,42,13.1);
+      doc.setTextColor(...MUTED); doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text('Manual de uso | Armário da Comunicação',M,12);
+      doc.setTextColor(...INK); doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text(tagOf(n)+'  '+e.nome,M,24); y=42; };
+    const need=h=>{ if(y+h>H-18){ doc.addPage(); header(); } };
+    header();
+    const png=await illToPng(key);
+    if(png){ const iw=116, ih=87; doc.addImage(png,'PNG',(W-iw)/2,y,iw,ih); y+=ih+3;
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...MUTED); doc.text(ILL[key].cap+'. Os números indicam os passos.',W/2,y+2,{align:'center'}); y+=10; }
+    const h2=t=>{ need(12); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...INK); doc.text(t,M,y); y+=7; };
+    h2('Como usar');
+    doc.setFontSize(11);
+    m.passos.forEach((t,i)=>{ const lines=doc.splitTextToSize(t,TW-10); need(lines.length*5+3);
+      doc.setFillColor(...FOCUS); doc.circle(M+3,y-1.4,3,'F'); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(String(i+1),M+3,y-0.2,{align:'center'});
+      doc.setTextColor(...TXT); doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.text(lines,M+10,y); y+=lines.length*5+3; });
+    y+=3; doc.setFontSize(11);
+    const cl=m.cuidados.map(t=>doc.splitTextToSize('• '+t,TW-10)); const bh=cl.reduce((a,l)=>a+l.length*5+2,0)+5; need(12+bh);
+    h2('Cuidados'); doc.setFontSize(11);
+    doc.setFillColor(...REDSOFT); doc.rect(M,y-5,TW,bh,'F'); doc.setFillColor(...RED); doc.rect(M,y-5,1.5,bh,'F');
+    doc.setTextColor(...TXT); doc.setFont('helvetica','normal'); doc.setFontSize(11);
+    let yy=y; cl.forEach(l=>{ doc.text(l,M+6,yy); yy+=l.length*5+2; }); y+=bh+4;
+    doc.setFontSize(11); const dl=doc.splitTextToSize(m.devolver,TW); need(12+dl.length*5);
+    h2('Ao devolver'); doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...TXT); doc.text(dl,M,y); y+=dl.length*5;
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){ doc.setPage(i); doc.setFontSize(8.5); doc.setTextColor(...MUTED);
+      doc.text('Dúvidas ou problemas: fale com '+CHAVES.slice(0,-1).join(', ')+' ou '+CHAVES[CHAVES.length-1]+'. Registre retirada e devolução no painel.',M,H-10); }
+    doc.save('manual-'+tagOf(n)+'-'+slug(e.nome)+'.pdf');
+    btn.disabled=false; btn.textContent=old;
+  }catch(err){ btn.disabled=false; if(err && err.code==='declined'){ btn.textContent=old; } else done('Não foi possível baixar'); }
+}
+
+/* ---------- Navegação ---------- */
+function go(name){
+  if(!SECTIONS.includes(name)) name = isPublic ? 'inicio' : 'painel';
+  if(isPublic && !PUBLIC_SECTIONS.includes(name)) name='inicio';
+  if(!isPublic && name==='inicio') name='painel';
+  if(name==='registrar' && !$('successCard').hidden && isPublic && location.hash!=='#registrar') resetForm();
+  SECTIONS.forEach(s=>{ $(s).hidden = s!==name; });
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected', String(t.dataset.go===name)));
+  renderAll();
+}
+function routeFromHash(){ go((location.hash||'').replace('#','')||(isPublic?'inicio':'painel')); }
+function renderAll(){
+  if(!$('painel').hidden) renderBoard();
+  if(!$('registrar').hidden && !$('formCard').hidden) renderItems();
+  if(!$('historico').hidden) renderHistory();
+  if(!$('indicadores').hidden) renderKpis();
+}
+
+/* ---------- Inicialização ---------- */
+function init(){
+  // filtros
+  const hi=$('hItem'); hi.append(new Option('Todos os equipamentos',''), ...EQUIP.map(e=>new Option(tagOf(e.n)+' '+eqName(e.n), e.n)));
+  renderChaves(); renderRules(); defaultPrev();
+  try{ const n=localStorage.getItem('eqc-nome'); if(n) $('fNome').value=n; }catch(e){}
+  document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{ const n=b.dataset.go; if(location.hash==='#'+n) go(n); else location.hash=n; }));
+  window.addEventListener('hashchange', routeFromHash);
+  document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setTipo(b.dataset.tipo)));
+  $('form').addEventListener('submit', onSubmit);
+  $('fFotos').addEventListener('change', e=>{ files=files.concat([...e.target.files]).slice(0,8); e.target.value=''; renderPhotos(); });
+  $('wppBtn').addEventListener('click', e=>{
+    if(!lastSaved) return;
+    const text=$('msgPreview').textContent;
+    if(!shareFailed && canShareFiles(shareFiles)){
+      e.preventDefault();
+      try{ if(navigator.clipboard) navigator.clipboard.writeText(text).catch(()=>{}); }catch(_){}
+      navigator.share({files:shareFiles, text}).then(()=>markWpp(lastSaved.id)).catch(err=>{
+        if(err && err.name==='AbortError') return;
+        shareFailed=true;
+        $('wppBtn').textContent='Abrir WhatsApp só com o texto';
+        $('shareNote').textContent='Não foi possível anexar as fotos automaticamente aqui. Toque de novo no botão para abrir o WhatsApp com a mensagem e anexe as fotos manualmente.';
+      });
+    } else markWpp(lastSaved.id);
+  });
+  $('copyBtn').addEventListener('click', e=>copyText($('msgPreview').textContent, e.currentTarget));
+  $('againBtn').addEventListener('click', resetForm);
+  $('hTipo').addEventListener('change', renderHistory); $('hItem').addEventListener('change', renderHistory);
+  $('period').addEventListener('change', renderKpis);
+  $('manPdf').addEventListener('click',ev=>downloadManual(Number($('manDlg').dataset.n), ev.currentTarget));
+  $('manClose').addEventListener('click',()=>{ const d=$('manDlg'); if(d.close) d.close(); else d.removeAttribute('open'); });
+  $('manDlg').addEventListener('click',ev=>{ if(ev.target===ev.currentTarget && ev.currentTarget.close) ev.currentTarget.close(); });
+  setTipo('retirada');
+  routeFromHash();
+  // Painel completo só com ?painel=1 no link; o QR Code e o link direto abrem o modo público.
+  try{ const pr=new URLSearchParams(location.search).get('painel'); if(pr==='1'||pr==='sim'){ isPublic=false; $('app').classList.remove('public'); routeFromHash(); } }catch(e){}
+  setInterval(()=>{ if(loaded) renderAll(); }, 60000);
+  connect();
+}
+
+let loading=false;
+async function loadData(){
+  if(loading) return; loading=true;
+  const conn=$('conn');
+  try{
+    const r=await server('getData');
+    movs=(r.rows||[]).filter(m=>m && m.criadoEm).sort((x,y)=>Date.parse(x.criadoEm)-Date.parse(y.criadoEm));
+    if(r.sheetUrl){ $('csvBtn').href=r.sheetUrl; $('csvBtn').hidden=false; }
+    conn.hidden=true; loaded=true; renderAll();
+  }catch(e){
+    conn.textContent='Não foi possível carregar os registros agora. Verifique a internet; o painel tenta de novo a cada minuto.'; conn.hidden=false;
+    loaded=true; renderAll();
+  }finally{ loading=false; }
+}
+function connect(){
+  updatePhotoHint();
+  loadData();
+  setInterval(()=>{ if(!document.hidden && $('registrar').hidden) loadData(); }, 60000);
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) loadData(); });
+}
+
+init();
+})();
+</script>
+</body>
+</html>
